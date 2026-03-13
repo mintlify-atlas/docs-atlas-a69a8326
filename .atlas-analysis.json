@@ -1,0 +1,110 @@
+{
+  "projectType": "saas",
+  "projectName": "MiroFish",
+  "projectDescription": "A swarm intelligence engine for predicting future scenarios through multi-agent simulation and knowledge graph analysis.",
+  "theme": "palm",
+  "primaryColor": "#45b0fb",
+  "lightColor": "#87ddfc",
+  "darkColor": "#ffffff",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/overview",
+              "concepts/knowledge-graphs",
+              "concepts/swarm-intelligence",
+              "concepts/multi-agent-simulation"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/creating-project",
+              "guides/building-graphs",
+              "guides/running-simulations",
+              "guides/generating-reports",
+              "guides/agent-interactions"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/environment-variables",
+              "configuration/llm-setup",
+              "configuration/zep-cloud"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/docker",
+              "deployment/source-code"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Graph API",
+            "pages": [
+              "api/graph/ontology-generate",
+              "api/graph/build",
+              "api/graph/project-management"
+            ]
+          },
+          {
+            "group": "Simulation API",
+            "pages": [
+              "api/simulation/create",
+              "api/simulation/prepare",
+              "api/simulation/run",
+              "api/simulation/entities",
+              "api/simulation/profiles"
+            ]
+          },
+          {
+            "group": "Report API",
+            "pages": [
+              "api/report/generate",
+              "api/report/get",
+              "api/report/chat"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Knowledge graph construction from documents using GraphRAG",
+    "Multi-agent simulation with independent personalities and memory",
+    "Parallel simulation across Twitter and Reddit platforms",
+    "AI-powered report generation with interactive analysis",
+    "Real-time agent interviews and conversations",
+    "LLM-driven ontology and profile generation",
+    "Docker deployment support"
+  ],
+  "publicApiSurface": [
+    "POST /api/graph/ontology/generate - Upload documents and generate ontology",
+    "POST /api/graph/build - Build knowledge graph from ontology",
+    "POST /api/simulation/create - Create new simulation",
+    "POST /api/simulation/prepare - Prepare simulation environment",
+    "GET /api/simulation/entities/{graph_id} - Get graph entities",
+    "POST /api/report/generate - Generate prediction report",
+    "POST /api/report/chat - Chat with report agent",
+    "GET /api/simulation/{simulation_id}/profiles - Get agent profiles"
+  ]
+}
