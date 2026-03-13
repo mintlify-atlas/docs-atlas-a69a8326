@@ -1,0 +1,482 @@
+---
+title: 'Report Chat'
+description: 'Interactive conversations with the Report Agent using RAG and tool calling'
+---
+
+## Overview
+
+The Report Chat API enables interactive conversations with the Report Agent. The agent can autonomously retrieve information from the knowledge graph to answer questions about the simulation results and generated reports.
+
+<Info>
+The chat agent uses the same ReACT (Reasoning + Acting) architecture as report generation, but optimized for conversational responses.
+</Info>
+
+## Chat with Report Agent
+
+### POST /api/report/chat
+
+Send a message to the Report Agent and receive an intelligent response with optional tool usage.
+
+**Request Body**
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID to query about
+</ParamField>
+
+<ParamField body="message" type="string" required>
+  User's question or message
+</ParamField>
+
+<ParamField body="chat_history" type="array">
+  Conversation history for context (optional)
+  
+  Each item should be an object with:
+  - `role`: "user" or "assistant"
+  - `content`: Message content
+</ParamField>
+
+**Response**
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="response" type="string">
+    Agent's response to the user's message
+  </ResponseField>
+  
+  <ResponseField name="tool_calls" type="array">
+    List of tools the agent called to answer the question
+    
+    <ResponseField name="name" type="string">
+      Tool name (e.g., `insight_forge`, `panorama_search`, `quick_search`, `interview_agents`)
+    </ResponseField>
+    
+    <ResponseField name="parameters" type="object">
+      Parameters passed to the tool
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="sources" type="array">
+    Information sources used (query strings from tool calls)
+  </ResponseField>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.mirofish.com/api/report/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_abc123",
+    "message": "学生群体对这次事件的主要反应是什么？",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "这次模拟的主要发现是什么？"
+      },
+      {
+        "role": "assistant",
+        "content": "根据模拟结果，主要发现包括：1) 事件在24小时内引爆全网..."
+      }
+    ]
+  }'
+```
+
+```python Python
+import requests
+
+class ReportChatClient:
+    def __init__(self, simulation_id: str):
+        self.simulation_id = simulation_id
+        self.history = []
+    
+    def ask(self, message: str) -> str:
+        response = requests.post(
+            "https://api.mirofish.com/api/report/chat",
+            json={
+                "simulation_id": self.simulation_id,
+                "message": message,
+                "chat_history": self.history
+            }
+        )
+        
+        data = response.json()["data"]
+        
+        # Update history
+        self.history.append({"role": "user", "content": message})
+        self.history.append({"role": "assistant", "content": data["response"]})
+        
+        # Show tool usage
+        if data["tool_calls"]:
+            print(f"[Agent used {len(data['tool_calls'])} tool(s)]")
+        
+        return data["response"]
+
+# Usage
+chat = ReportChatClient("sim_abc123")
+response = chat.ask("学生群体的主要反应是什么？")
+print(response)
+```
+</RequestExample>
+
+<ResponseExample>
+```json Simple Response (No Tools)
+{
+  "success": true,
+  "data": {
+    "response": "根据报告的执行摘要部分，学生群体对宿舍甲醛超标事件表现出强烈反应：\n\n> \"学生群体的反应强烈，社交媒体上出现了大量质疑声音，要求校方立即整改并公开检测数据\"\n\n主要表现在：\n- 通过社交媒体大量发声\n- 质疑校方的处理方式\n- 要求公开透明的检测数据\n- 要求立即整改",
+    "tool_calls": [],
+    "sources": []
+  }
+}
+```
+
+```json With Tool Usage
+{
+  "success": true,
+  "data": {
+    "response": "我查询了模拟数据，发现学生群体在事件曝光后有三个阶段的反应：\n\n**第一阶段：震惊与愤怒（0-6小时）**\n\n学生在社交媒体上表达强烈不满：\n\n> \"我们的健康被当成儿戏，学校竟然让我们住在甲醛超标的宿舍里整整两个月！\"\n\n**第二阶段：组织行动（6-24小时）**\n\n学生开始自发组织：\n- 成立维权小组\n- 联系媒体曝光\n- 收集检测证据\n\n**第三阶段：持续施压（24小时后）**\n\n> \"我们不会接受敷衍的回应，要求校方给出明确的整改时间表和赔偿方案\"\n\n这些反应显示学生群体从情绪宣泄转向理性维权，形成了有组织的行动。",
+    "tool_calls": [
+      {
+        "name": "insight_forge",
+        "parameters": {
+          "query": "学生群体对甲醛事件的反应和行为",
+          "report_context": "当前正在回答用户关于学生反应的问题"
+        }
+      }
+    ],
+    "sources": [
+      "学生群体对甲醛事件的反应和行为"
+    ]
+  }
+}
+```
+</ResponseExample>
+
+---
+
+## How the Agent Works
+
+### Agent Capabilities
+
+The Report Agent operates with the following workflow:
+
+1. **Context Loading**
+   - Loads existing report content (if available)
+   - Reads simulation requirements
+   - Maintains conversation history
+
+2. **Intent Analysis**
+   - Determines if question can be answered from report
+   - Identifies if additional data retrieval is needed
+
+3. **Tool Selection** (if needed)
+   - Autonomously chooses appropriate tools
+   - Formulates queries to retrieve relevant information
+   - Limited to 1-2 tool calls per response for efficiency
+
+4. **Response Generation**
+   - Synthesizes information from report and tool results
+   - Includes direct quotes from simulation data
+   - Provides concise, clear answers
+
+### Available Tools
+
+The agent can use these tools to answer questions:
+
+**insight_forge**
+- Deep analysis of specific topics
+- Multi-dimensional knowledge graph search
+- Decomposes complex questions into sub-queries
+
+**panorama_search**
+- Get complete event timeline
+- Understand evolution of public opinion
+- Distinguish current vs. historical facts
+
+**quick_search**
+- Fast fact lookup
+- Simple information retrieval
+- Verify specific details
+
+**interview_agents**
+- Get first-person perspectives from simulated agents
+- Interview specific roles (students, media, officials, etc.)
+- Dual-platform interviews (Twitter + Reddit)
+
+<Note>
+The agent prioritizes answering from the existing report first, only calling tools when the report doesn't contain sufficient information.
+</Note>
+
+### Response Optimization
+
+The chat agent is optimized for conversational efficiency:
+
+- **Fast responses**: Answers from report content without tool calls
+- **Limited tool usage**: Maximum 1-2 tool calls per message
+- **Concise answers**: Direct and to-the-point responses
+- **Contextual memory**: Maintains conversation history (last 10 messages)
+
+---
+
+## Example Conversations
+
+### Example 1: Basic Question (No Tools)
+
+<CodeGroup>
+```json Request
+{
+  "simulation_id": "sim_abc123",
+  "message": "报告的核心发现是什么？",
+  "chat_history": []
+}
+```
+
+```json Response
+{
+  "success": true,
+  "data": {
+    "response": "报告的核心发现包括：\n\n1. **舆情爆发速度**：事件在首次曝光后3-6小时内引爆全网，24小时内传播量超过100万次\n\n2. **群体反应强烈**：学生群体表现出强烈质疑，社交媒体上出现大量讨论\n\n3. **官方回应失当**：官方初期回应被认为缺乏诚意，进一步加剧舆情\n\n4. **持续发酵时间长**：舆情持续发酵超过一周，影响范围不断扩大",
+    "tool_calls": [],
+    "sources": []
+  }
+}
+```
+</CodeGroup>
+
+### Example 2: Deep Dive Question (With Tool)
+
+<CodeGroup>
+```json Request
+{
+  "simulation_id": "sim_abc123",
+  "message": "能详细说说媒体是如何报道这次事件的吗？",
+  "chat_history": [
+    {
+      "role": "user",
+      "content": "报告的核心发现是什么？"
+    },
+    {
+      "role": "assistant",
+      "content": "报告的核心发现包括..."
+    }
+  ]
+}
+```
+
+```json Response
+{
+  "success": true,
+  "data": {
+    "response": "根据模拟数据，媒体报道呈现出明显的分层特征：\n\n**自媒体阶段（0-6小时）**\n\n校园自媒体最先发声，以情绪化表达为主：\n\n> \"学校竟然让学生住甲醛房，这是对学生生命的漠视！\"\n\n**传统媒体跟进（6-24小时）**\n\n地方媒体开始跟进报道，强调事实核查：\n\n> \"记者实地走访发现，该宿舍楼确实存在装修异味，多名学生出现身体不适症状\"\n\n**全国性媒体关注（24-48小时）**\n\n央媒介入，将事件上升到教育系统性问题的高度：\n\n> \"高校基建质量问题不容忽视，学生健康安全应该是底线\"\n\n媒体的多层次报道极大地放大了事件影响力。",
+    "tool_calls": [
+      {
+        "name": "panorama_search",
+        "parameters": {
+          "query": "媒体报道",
+          "include_expired": true
+        }
+      }
+    ],
+    "sources": [
+      "媒体报道"
+    ]
+  }
+}
+```
+</CodeGroup>
+
+### Example 3: Agent Interview Question
+
+<CodeGroup>
+```json Request
+{
+  "simulation_id": "sim_abc123",
+  "message": "能采访一些受影响的学生，了解他们的真实想法吗？",
+  "chat_history": []
+}
+```
+
+```json Response
+{
+  "success": true,
+  "data": {
+    "response": "我采访了5位模拟环境中的学生代表，以下是他们的真实回应：\n\n**计算机系大二学生（Twitter）**\n> \"住进去第一周就觉得不对劲，每天早上起床都头疼，室友也是。我们多次向宿管反映，但一直没人重视。现在想想真的后怕。\"\n\n**医学院研究生（Reddit）**\n> \"作为医学生，我很清楚甲醛的危害。这不仅仅是赔偿的问题，更是学校管理失职。我们要求彻底检测，公开数据，并追究相关责任。\"\n\n**经济学院大一新生（Twitter）**\n> \"我爸妈知道这事后特别担心，已经在考虑让我转学了。学校这样的态度，让家长怎么放心？\"\n\n**法学院学生（Reddit）**\n> \"我们正在咨询律师，准备通过法律途径维权。这不是个别事件，是系统性的安全隐患。\"\n\n学生们的态度从愤怒、担忧到寻求法律途径，显示出强烈的维权意识和对学校的不信任。",
+    "tool_calls": [
+      {
+        "name": "interview_agents",
+        "parameters": {
+          "interview_topic": "受影响学生对甲醛事件的看法和诉求",
+          "max_agents": 5
+        }
+      }
+    ],
+    "sources": [
+      "受影响学生对甲醛事件的看法和诉求"
+    ]
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Chat Context Management
+
+### Conversation History
+
+The agent maintains conversation context through the `chat_history` parameter:
+
+```python
+# Initialize empty history
+chat_history = []
+
+# First message
+response1 = chat("这次模拟的背景是什么？", chat_history)
+chat_history.append({"role": "user", "content": "这次模拟的背景是什么？"})
+chat_history.append({"role": "assistant", "content": response1["response"]})
+
+# Follow-up message with context
+response2 = chat("学生的主要诉求有哪些？", chat_history)
+chat_history.append({"role": "user", "content": "学生的主要诉求有哪些？"})
+chat_history.append({"role": "assistant", "content": response2["response"]})
+```
+
+### History Limits
+
+- Maximum 10 previous messages retained
+- Older messages automatically truncated
+- Report content limited to 15,000 characters
+
+### Best Practices
+
+1. **Maintain history** for multi-turn conversations
+2. **Clear history** when starting a new topic
+3. **Ask specific questions** for better responses
+4. **Reference previous context** in follow-up questions
+
+---
+
+## Tool Usage Patterns
+
+### When Tools Are Called
+
+The agent decides to use tools when:
+
+- Question requires detailed information not in the report
+- User asks for specific data or statistics
+- Question involves agent perspectives or quotes
+- Timeline or evolution analysis is needed
+
+### When Tools Are Not Called
+
+The agent answers directly from report when:
+
+- Question can be answered from existing report content
+- User asks for summary or overview
+- Question is about report structure or metadata
+- Simple clarification is needed
+
+### Tool Selection Logic
+
+```typescript
+// Agent's decision process
+if (questionInReport) {
+  return answerFromReport();
+} else if (needsDeepAnalysis) {
+  useInsightForge();
+} else if (needsTimeline) {
+  usePanoramaSearch();
+} else if (needsAgentPerspective) {
+  useInterviewAgents();
+} else {
+  useQuickSearch();
+}
+```
+
+---
+
+## Error Handling
+
+<ResponseExample>
+```json Simulation Not Found
+{
+  "success": false,
+  "error": "模拟不存在: sim_invalid123"
+}
+```
+
+```json Missing Parameters
+{
+  "success": false,
+  "error": "请提供 simulation_id"
+}
+```
+
+```json Missing Message
+{
+  "success": false,
+  "error": "请提供 message"
+}
+```
+</ResponseExample>
+
+---
+
+## Performance Considerations
+
+### Response Times
+
+- **No tools**: 1-2 seconds (direct from report)
+- **1 tool call**: 3-5 seconds (single retrieval)
+- **2 tool calls**: 5-8 seconds (multiple retrievals)
+
+### Optimization Tips
+
+1. **Generate report first**: Chat works best with completed reports
+2. **Ask focused questions**: Specific questions get faster responses
+3. **Use conversation history**: Helps agent understand context
+4. **Avoid overly broad questions**: May trigger multiple tool calls
+
+<Warning>
+The chat agent requires an existing simulation with knowledge graph. Report generation is recommended but not required - the agent can answer questions using direct knowledge graph queries if no report exists.
+</Warning>
+
+---
+
+## Use Cases
+
+### Report Exploration
+```python
+# Explore different aspects of the report
+questions = [
+    "报告的核心发现是什么？",
+    "学生群体的主要反应如何？",
+    "官方是如何回应的？",
+    "舆情是如何演变的？"
+]
+
+for question in questions:
+    response = chat_client.ask(question)
+    print(f"Q: {question}")
+    print(f"A: {response}\n")
+```
+
+### Deep Dive Analysis
+```python
+# Ask for detailed analysis with agent interviews
+response = chat_client.ask(
+    "能采访一些媒体记者，了解他们为什么要报道这次事件吗？"
+)
+# Agent will use interview_agents tool to get real perspectives
+```
+
+### Comparative Analysis
+```python
+# Compare different groups' reactions
+response = chat_client.ask(
+    "学生、家长、媒体这三个群体的反应有什么不同？"
+)
+# Agent will use insight_forge to analyze multi-dimensional differences
+```

@@ -1,97 +1,132 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: MiroFish
+description: "A swarm intelligence engine for predicting future scenarios through multi-agent simulation"
 ---
 
-## Setting up
+<div className="hero-section" style={{ padding: "4rem 0", background: "linear-gradient(135deg, #45b0fb 0%, #87ddfc 100%)" }}>
+  <div style={{ maxWidth: "1200px", margin: "0 auto", textAlign: "center", color: "#000000" }}>
+    <h1 style={{ fontSize: "3.5rem", fontWeight: "700", marginBottom: "1.5rem", color: "#000000" }}>
+      Predict Anything with Swarm Intelligence
+    </h1>
+    <p style={{ fontSize: "1.25rem", marginBottom: "2rem", color: "#000000", opacity: "0.9" }}>
+      Build high-fidelity digital worlds powered by thousands of intelligent agents with independent personalities, long-term memory, and social dynamics.
+    </p>
+    <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+      <a href="/quickstart" style={{ background: "#ffffff", color: "#000000", padding: "0.75rem 2rem", borderRadius: "8px", textDecoration: "none", fontWeight: "600", fontSize: "1rem" }}>
+        Get Started
+      </a>
+      <a href="https://github.com/666ghj/MiroFish" style={{ background: "rgba(255, 255, 255, 0.15)", color: "#000000", padding: "0.75rem 2rem", borderRadius: "8px", textDecoration: "none", fontWeight: "600", fontSize: "1rem" }}>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+## What is MiroFish?
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+MiroFish is a next-generation AI prediction engine that uses multi-agent technology to create parallel digital worlds. Upload documents containing real-world information, and watch as thousands of intelligent agents interact, evolve, and reveal future trajectories.
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={3}>
+  <Card title="Knowledge Graphs" icon="diagram-project" href="/concepts/knowledge-graphs">
+    Extract entities and relationships from documents using GraphRAG
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Multi-Agent Simulation" icon="users" href="/concepts/multi-agent-simulation">
+    Simulate thousands of agents with unique personalities and memory
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="AI-Powered Reports" icon="file-lines" href="/guides/generating-reports">
+    Generate comprehensive prediction reports with deep insights
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Key Features
 
-Everything you need to create world-class documentation.
+<CardGroup cols={2}>
+  <Card title="Graph Construction" icon="network-wired">
+    Build knowledge graphs from PDFs, Markdown, and text files with automatic ontology generation
+  </Card>
+  <Card title="Swarm Intelligence" icon="brain">
+    Leverage collective emergence from individual agent interactions to predict complex scenarios
+  </Card>
+  <Card title="Platform Simulation" icon="comments">
+    Run parallel simulations across Twitter and Reddit platforms simultaneously
+  </Card>
+  <Card title="Interactive Analysis" icon="comment-dots">
+    Chat with agents and report generators to explore predictions in depth
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Quick Start
 
-## Need inspiration?
+<Steps>
+  <Step title="Install Dependencies">
+    Clone the repository and install frontend and backend dependencies
+    
+    ```bash
+    git clone https://github.com/666ghj/MiroFish.git
+    cd MiroFish
+    npm run setup:all
+    ```
+  </Step>
+  
+  <Step title="Configure Environment">
+    Set up your LLM API keys and Zep Cloud credentials
+    
+    ```bash
+    cp .env.example .env
+    # Edit .env with your API keys
+    ```
+  </Step>
+  
+  <Step title="Start the Application">
+    Launch both frontend and backend services
+    
+    ```bash
+    npm run dev
+    ```
+    
+    Access the application at `http://localhost:3000`
+  </Step>
+</Steps>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## Use Cases
+
+MiroFish enables powerful prediction scenarios across domains:
+
+- **Public Opinion Analysis**: Predict how social sentiment evolves around policy changes or news events
+- **Financial Forecasting**: Simulate market reactions to economic signals and corporate announcements  
+- **Scenario Planning**: Test strategic decisions in risk-free digital environments before real-world execution
+- **Creative Exploration**: Predict alternative storylines, plot developments, or narrative outcomes
+
+## Architecture
+
+<CardGroup cols={2}>
+  <Card title="Backend API" icon="server" href="/api/graph/ontology-generate">
+    Flask-based REST API with GraphRAG and OASIS integration
+  </Card>
+  <Card title="Frontend Dashboard" icon="desktop">
+    Vue 3 application for managing projects and visualizing results
+  </Card>
+  <Card title="Knowledge Graph" icon="diagram-project" href="/concepts/knowledge-graphs">
+    Zep Cloud-powered graph database with entity extraction
+  </Card>
+  <Card title="Simulation Engine" icon="gears" href="/concepts/swarm-intelligence">
+    OASIS framework for multi-agent social simulation
+  </Card>
+</CardGroup>
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="Installation Guide" icon="download" href="/installation">
+    Detailed setup instructions for Docker and source deployment
+  </Card>
+  <Card title="Core Concepts" icon="book" href="/concepts/overview">
+    Understand how MiroFish creates predictions
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/graph/ontology-generate">
+    Complete API documentation for integration
+  </Card>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/666ghj/MiroFish">
+    View source code, examples, and contribute
+  </Card>
+</CardGroup>

@@ -1,122 +1,110 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "MiroFish",
+  "theme": "palm",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#45b0fb",
+    "light": "#87ddfc",
+    "dark": "#ffffff"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://media.brand.dev/c8f9a254-44e7-42ae-94fb-ca941453db1c.svg",
+  "logo": {
+    "light": "https://media.brand.dev/dad0506b-cdcc-49fe-9d67-6cb41e2c1bc6.png",
+    "dark": "https://media.brand.dev/dad0506b-cdcc-49fe-9d67-6cb41e2c1bc6.png"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/666ghj/MiroFish"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/666ghj/MiroFish",
+      "x": "https://x.com/mirofish_ai",
+      "discord": "https://discord.com/channels/1469200078932545606/1469201282077163739"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "installation"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Concepts",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "concepts/overview",
+              "concepts/knowledge-graphs",
+              "concepts/swarm-intelligence",
+              "concepts/multi-agent-simulation"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Guides",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "guides/creating-project",
+              "guides/building-graphs",
+              "guides/running-simulations",
+              "guides/generating-reports",
+              "guides/agent-interactions"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Configuration",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "configuration/environment-variables",
+              "configuration/llm-setup",
+              "configuration/zep-cloud"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/docker",
+              "deployment/source-code"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Graph API",
             "pages": [
-              "api-reference/introduction"
+              "api/graph/ontology-generate",
+              "api/graph/build",
+              "api/graph/project-management"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Simulation API",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/simulation/create",
+              "api/simulation/prepare",
+              "api/simulation/run",
+              "api/simulation/entities",
+              "api/simulation/profiles"
+            ]
+          },
+          {
+            "group": "Report API",
+            "pages": [
+              "api/report/generate",
+              "api/report/get",
+              "api/report/chat"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

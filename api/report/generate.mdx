@@ -1,0 +1,452 @@
+---
+title: 'Generate Report'
+description: 'Generate simulation analysis reports with ReACT-based AI agent'
+---
+
+## Overview
+
+The Report API enables asynchronous generation of comprehensive simulation analysis reports using an intelligent ReACT (Reasoning + Acting) agent. The agent autonomously retrieves information from the knowledge graph and generates structured reports with multiple sections.
+
+## Generate Report
+
+<Note>
+Report generation is an asynchronous operation. Use the status endpoints to track progress.
+</Note>
+
+### POST /api/report/generate
+
+Initiate report generation for a simulation. Returns immediately with a task ID and report ID for tracking progress.
+
+**Request Body**
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID to generate a report for
+</ParamField>
+
+<ParamField body="force_regenerate" type="boolean" default={false}>
+  Force regeneration even if a report already exists for this simulation
+</ParamField>
+
+**Response**
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="simulation_id" type="string">
+    The simulation ID
+  </ResponseField>
+  
+  <ResponseField name="report_id" type="string">
+    The generated report ID (format: `report_xxxxxxxxxxxx`)
+  </ResponseField>
+  
+  <ResponseField name="task_id" type="string">
+    The async task ID for tracking generation progress
+  </ResponseField>
+  
+  <ResponseField name="status" type="string">
+    Current status: `generating` or `completed` (if already exists)
+  </ResponseField>
+  
+  <ResponseField name="message" type="string">
+    Status message
+  </ResponseField>
+  
+  <ResponseField name="already_generated" type="boolean">
+    True if report already existed and was not regenerated
+  </ResponseField>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.mirofish.com/api/report/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_abc123",
+    "force_regenerate": false
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.mirofish.com/api/report/generate",
+    json={
+        "simulation_id": "sim_abc123",
+        "force_regenerate": False
+    }
+)
+
+data = response.json()["data"]
+report_id = data["report_id"]
+task_id = data["task_id"]
+```
+</RequestExample>
+
+<ResponseExample>
+```json Response
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_abc123",
+    "report_id": "report_f8a3c91b2e4d",
+    "task_id": "task_7d6e9c2a1b5f",
+    "status": "generating",
+    "message": "报告生成任务已启动，请通过 /api/report/generate/status 查询进度",
+    "already_generated": false
+  }
+}
+```
+</ResponseExample>
+
+---
+
+## Check Generation Status
+
+### POST /api/report/generate/status
+
+Check the progress of report generation task.
+
+**Request Body**
+
+<ParamField body="task_id" type="string">
+  The task ID returned from generate endpoint
+</ParamField>
+
+<ParamField body="simulation_id" type="string">
+  Alternative: check by simulation ID instead of task ID
+</ParamField>
+
+<Note>
+Provide either `task_id` or `simulation_id`. If `simulation_id` is provided and report already exists, it returns completed status immediately.
+</Note>
+
+**Response**
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="task_id" type="string">
+    The task ID
+  </ResponseField>
+  
+  <ResponseField name="status" type="string">
+    Task status: `pending`, `processing`, `completed`, or `failed`
+  </ResponseField>
+  
+  <ResponseField name="progress" type="number">
+    Progress percentage (0-100)
+  </ResponseField>
+  
+  <ResponseField name="message" type="string">
+    Current status message describing the generation stage
+  </ResponseField>
+  
+  <ResponseField name="report_id" type="string">
+    Report ID (available when completed)
+  </ResponseField>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.mirofish.com/api/report/generate/status \
+  -H "Content-Type: application/json" \
+  -d '{"task_id": "task_7d6e9c2a1b5f"}'
+```
+
+```python Python
+import requests
+import time
+
+task_id = "task_7d6e9c2a1b5f"
+
+while True:
+    response = requests.post(
+        "https://api.mirofish.com/api/report/generate/status",
+        json={"task_id": task_id}
+    )
+    
+    data = response.json()["data"]
+    print(f"Progress: {data['progress']}% - {data['message']}")
+    
+    if data["status"] in ["completed", "failed"]:
+        break
+    
+    time.sleep(5)
+```
+</RequestExample>
+
+<ResponseExample>
+```json Processing
+{
+  "success": true,
+  "data": {
+    "task_id": "task_7d6e9c2a1b5f",
+    "status": "processing",
+    "progress": 45,
+    "message": "[generating] 正在生成章节: 关键发现 (2/4)"
+  }
+}
+```
+
+```json Completed
+{
+  "success": true,
+  "data": {
+    "task_id": "task_7d6e9c2a1b5f",
+    "status": "completed",
+    "progress": 100,
+    "message": "报告生成完成",
+    "report_id": "report_f8a3c91b2e4d"
+  }
+}
+```
+</ResponseExample>
+
+---
+
+## Real-Time Progress
+
+### GET /api/report/{report_id}/progress
+
+Get real-time generation progress with detailed section information.
+
+**Path Parameters**
+
+<ParamField path="report_id" type="string" required>
+  The report ID
+</ParamField>
+
+**Response**
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="status" type="string">
+    Report status: `pending`, `planning`, `generating`, `completed`, or `failed`
+  </ResponseField>
+  
+  <ResponseField name="progress" type="number">
+    Progress percentage (0-100)
+  </ResponseField>
+  
+  <ResponseField name="message" type="string">
+    Current status message
+  </ResponseField>
+  
+  <ResponseField name="current_section" type="string">
+    Title of section currently being generated (null if none)
+  </ResponseField>
+  
+  <ResponseField name="completed_sections" type="array">
+    Array of completed section titles
+  </ResponseField>
+  
+  <ResponseField name="updated_at" type="string">
+    ISO 8601 timestamp of last update
+  </ResponseField>
+</ResponseField>
+
+<ResponseExample>
+```json Response
+{
+  "success": true,
+  "data": {
+    "status": "generating",
+    "progress": 45,
+    "message": "正在生成章节: 关键发现",
+    "current_section": "关键发现",
+    "completed_sections": ["执行摘要", "模拟背景"],
+    "updated_at": "2025-12-09T14:23:45.123456"
+  }
+}
+```
+</ResponseExample>
+
+---
+
+## Get Generated Sections
+
+### GET /api/report/{report_id}/sections
+
+Retrieve sections as they are generated without waiting for the entire report to complete.
+
+**Path Parameters**
+
+<ParamField path="report_id" type="string" required>
+  The report ID
+</ParamField>
+
+<Info>
+Poll this endpoint to get sections incrementally as they complete, enabling progressive display in the UI.
+</Info>
+
+**Response**
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="report_id" type="string">
+    The report ID
+  </ResponseField>
+  
+  <ResponseField name="sections" type="array">
+    Array of generated sections
+    
+    <ResponseField name="filename" type="string">
+      Section filename (e.g., `section_01.md`)
+    </ResponseField>
+    
+    <ResponseField name="section_index" type="number">
+      Section index (1-based)
+    </ResponseField>
+    
+    <ResponseField name="content" type="string">
+      Full Markdown content of the section including title
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="total_sections" type="number">
+    Number of sections currently available
+  </ResponseField>
+  
+  <ResponseField name="is_complete" type="boolean">
+    Whether all sections are complete
+  </ResponseField>
+</ResponseField>
+
+<ResponseExample>
+```json Response
+{
+  "success": true,
+  "data": {
+    "report_id": "report_f8a3c91b2e4d",
+    "sections": [
+      {
+        "filename": "section_01.md",
+        "section_index": 1,
+        "content": "## 执行摘要\n\n本次模拟预测了在高校宿舍甲醛超标事件下...\n\n> \"学生群体的反应强烈，社交媒体上出现了大量质疑声音...\"\n\n**预测要点**\n\n- 事件在24小时内引发全网关注\n- 官方回应被认为缺乏诚意\n- 舆情持续发酵超过一周\n"
+      },
+      {
+        "filename": "section_02.md",
+        "section_index": 2,
+        "content": "## 模拟背景\n\n模拟场景设定为某高校新建宿舍楼在入住后被检测出甲醛超标...\n"
+      }
+    ],
+    "total_sections": 2,
+    "is_complete": false
+  }
+}
+```
+</ResponseExample>
+
+---
+
+## Report Structure
+
+Reports generated by the ReACT agent follow this structure:
+
+### Generation Stages
+
+1. **Planning Stage** (5-15% progress)
+   - Analyze simulation requirements
+   - Retrieve context from knowledge graph
+   - Generate outline with 2-5 sections
+
+2. **Generation Stage** (15-95% progress)
+   - Generate each section using ReACT loops
+   - Agent autonomously calls tools (3-5 times per section)
+   - Tools: `insight_forge`, `panorama_search`, `quick_search`, `interview_agents`
+   - Include direct quotes from simulation agents
+
+3. **Assembly Stage** (95-100% progress)
+   - Combine all sections into complete report
+   - Clean formatting and remove duplicate headings
+
+### Report Sections
+
+Typical reports contain 2-5 sections dynamically determined by the AI agent based on simulation results. Common sections include:
+
+- **Executive Summary**: Key predictions and findings
+- **Simulation Context**: Background and scenario setup
+- **Agent Behavior Analysis**: Predicted reactions of different groups
+- **Trend Analysis**: Emerging patterns and developments
+- **Risk Assessment**: Potential risks and concerns
+- **Recommendations**: Suggested actions
+
+### File Structure
+
+```
+reports/{report_id}/
+  meta.json           # Report metadata and status
+  outline.json        # Report outline structure
+  progress.json       # Real-time generation progress
+  section_01.md       # Section 1 (Executive Summary)
+  section_02.md       # Section 2
+  section_03.md       # Section 3
+  ...
+  full_report.md      # Complete assembled report
+  agent_log.jsonl     # Structured agent execution log
+  console_log.txt     # Console output log
+```
+
+---
+
+## Report Agent Capabilities
+
+The Report Agent uses a ReACT (Reasoning + Acting) architecture:
+
+### Available Tools
+
+The agent autonomously selects and uses these tools:
+
+**insight_forge** - Deep insight retrieval
+- Decomposes questions into sub-queries
+- Multi-dimensional knowledge graph search
+- Returns comprehensive facts and entity insights
+
+**panorama_search** - Panoramic view
+- Retrieves complete event timeline
+- Distinguishes current vs. historical facts
+- Shows evolution of public opinion
+
+**quick_search** - Fast lookup
+- Quick fact verification
+- Lightweight semantic search
+
+**interview_agents** - Real agent interviews
+- Calls OASIS simulation interview API
+- Gets authentic responses from simulated agents
+- Interviews on both Twitter and Reddit platforms
+- Provides multi-perspective analysis
+
+### ReACT Loop
+
+For each section, the agent:
+
+1. **Thinks**: Analyzes what information is needed
+2. **Acts**: Calls tools to retrieve data
+3. **Observes**: Processes tool results
+4. **Repeats**: 3-5 iterations until sufficient information
+5. **Answers**: Generates final section content with citations
+
+### Content Requirements
+
+- All content based on simulation data from knowledge graph
+- Extensive use of direct quotes from simulated agents
+- Quotes formatted as blockquotes: `> "Agent statement..."`
+- No Markdown headings within sections (system adds section titles)
+- Use **bold text** for emphasis instead of subheadings
+
+<Warning>
+Reports require a completed simulation with knowledge graph data. The simulation must be in completed status with graph_id available.
+</Warning>

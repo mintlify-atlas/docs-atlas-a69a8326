@@ -1,0 +1,322 @@
+---
+title: 'Zep Cloud Setup'
+description: 'Configure Zep Cloud memory service for MiroFish agent memory and knowledge graphs'
+icon: 'cloud'
+---
+
+## What is Zep Cloud?
+
+Zep Cloud is a memory service that provides long-term memory and knowledge graph capabilities for AI applications. MiroFish uses Zep to:
+
+- **Store agent memories**: Agents remember their actions, interactions, and experiences across simulation rounds
+- **Build knowledge graphs**: Create semantic relationships between concepts, users, and events
+- **Enable context awareness**: Agents can recall relevant past information when making decisions
+- **Improve simulation realism**: Agents exhibit more realistic behavior with memory persistence
+
+<Note>
+  Zep Cloud is a required service for MiroFish. The free tier is sufficient for most use cases.
+</Note>
+
+## Why MiroFish Uses Zep
+
+Swarm intelligence simulations require agents to maintain state across time:
+
+1. **Memory persistence**: Agents need to remember past interactions, decisions, and outcomes
+2. **Social relationships**: Agents track who they've interacted with and relationship quality
+3. **Learning over time**: Agents improve strategies based on past successes/failures
+4. **Contextual decision-making**: Current decisions informed by historical context
+
+Zep provides a production-ready memory layer without requiring you to build and maintain your own memory infrastructure.
+
+## Creating a Zep Cloud Account
+
+### Step 1: Sign Up
+
+1. Visit [https://app.getzep.com/](https://app.getzep.com/)
+2. Click "Sign Up" or "Get Started"
+3. Create an account using:
+   - Email and password
+   - GitHub OAuth
+   - Google OAuth
+
+<Tip>
+  Using OAuth (GitHub or Google) provides faster signup and easier account management.
+</Tip>
+
+### Step 2: Verify Your Account
+
+If you signed up with email:
+1. Check your inbox for a verification email from Zep
+2. Click the verification link
+3. Complete the verification process
+
+### Step 3: Access Your Dashboard
+
+After signup, you'll be directed to the Zep Cloud dashboard at `https://app.getzep.com/`.
+
+## Getting Your API Key
+
+### Locate API Key Section
+
+1. Log in to [https://app.getzep.com/](https://app.getzep.com/)
+2. Navigate to **Settings** or **API Keys** section (usually in the sidebar)
+3. Look for "API Keys" or "Credentials"
+
+### Generate an API Key
+
+1. Click **"Create API Key"** or **"Generate New Key"**
+2. Give your key a descriptive name (e.g., "MiroFish Production")
+3. Click **"Generate"** or **"Create"**
+4. **Copy the API key immediately** - it may only be shown once
+
+<Warning>
+  Copy your API key immediately after generation. Some services only display the key once for security reasons.
+</Warning>
+
+### API Key Format
+
+Zep API keys typically start with `z_` followed by a string of characters:
+
+```
+z_abc123def456ghi789jkl012mno345
+```
+
+## Configuring Zep in MiroFish
+
+### Add to Environment Variables
+
+Open your `.env` file and add your Zep API key:
+
+```bash
+ZEP_API_KEY=z_your_actual_api_key_here
+```
+
+### Example Complete Configuration
+
+```bash
+# LLM Configuration
+LLM_API_KEY=sk-abc123
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL_NAME=qwen-plus
+
+# Zep Memory Configuration
+ZEP_API_KEY=z_abc123def456ghi789jkl012mno345
+```
+
+### Restart MiroFish
+
+After adding the Zep API key, restart MiroFish:
+
+```bash
+# Docker
+docker-compose restart
+
+# Source
+# Stop the process (Ctrl+C) and restart
+npm run dev
+```
+
+## Free Tier vs Paid Plans
+
+### Free Tier
+
+Zep Cloud offers a generous free tier that includes:
+
+- **Memory storage**: Sufficient for simple simulations
+- **API calls**: Monthly quota for memory operations
+- **Knowledge graph**: Basic graph capabilities
+- **Retention**: Memory data retention period
+
+<Tip>
+  The free tier is sufficient for testing and small-scale simulations. The documentation mentions "monthly free quota is enough for simple usage."
+</Tip>
+
+### When to Upgrade
+
+Consider upgrading to a paid plan if:
+
+1. **High simulation volume**: Running many large-scale simulations
+2. **Long-term projects**: Need extended memory retention
+3. **Complex knowledge graphs**: Building large, interconnected graphs
+4. **Production deployments**: Running MiroFish as a service for multiple users
+
+### Paid Plan Features
+
+Paid tiers typically include:
+- Higher API rate limits
+- Extended memory retention
+- Larger knowledge graph capacity
+- Priority support
+- Advanced analytics
+
+Check [Zep's pricing page](https://www.getzep.com/pricing) for current plan details.
+
+## Verifying Your Zep Connection
+
+### Check Backend Logs
+
+After configuring Zep, verify the connection:
+
+```bash
+# Docker
+docker logs mirofish | grep -i zep
+
+# Source
+# Check the backend terminal output for Zep-related messages
+```
+
+You should see no errors about missing `ZEP_API_KEY`.
+
+### Run a Test Simulation
+
+Create a minimal simulation to test Zep integration:
+
+1. Create a simulation with 2 agents
+2. Run for 5 rounds
+3. Check that agents can recall previous actions
+
+If agents exhibit memory of past rounds, Zep is working correctly.
+
+### Check Zep Dashboard
+
+View memory activity in the Zep dashboard:
+
+1. Log in to [https://app.getzep.com/](https://app.getzep.com/)
+2. Navigate to your project
+3. Check for memory entries created by MiroFish
+4. View knowledge graph nodes and relationships
+
+## Troubleshooting Zep Connection
+
+### "ZEP_API_KEY not configured" Error
+
+**Symptoms**: Backend fails to start or shows validation error
+
+**Solution**:
+1. Ensure `.env` file exists in project root
+2. Verify `ZEP_API_KEY=z_...` is present
+3. Check for typos in the key
+4. Restart MiroFish after adding the key
+
+### Authentication Errors
+
+**Symptoms**: "Invalid API key" or "Authentication failed" errors
+
+**Solutions**:
+1. Verify your API key is correct (copy-paste from Zep dashboard)
+2. Check that the key hasn't been revoked
+3. Ensure no extra spaces or characters in `.env` file
+4. Generate a new API key if needed
+
+### Rate Limit Errors
+
+**Symptoms**: "Rate limit exceeded" or "429 Too Many Requests"
+
+**Solutions**:
+1. Check your Zep dashboard for usage limits
+2. Reduce simulation frequency or size
+3. Upgrade to a paid plan for higher limits
+4. Add delays between simulations
+
+### Connection Timeout
+
+**Symptoms**: Requests to Zep API timeout
+
+**Solutions**:
+1. Check your internet connection
+2. Verify Zep Cloud status (check Zep's status page)
+3. Try again after a few minutes (may be temporary)
+4. Check firewall settings if behind corporate network
+
+### Memory Not Persisting
+
+**Symptoms**: Agents don't remember previous rounds
+
+**Solutions**:
+1. Verify Zep API key is configured correctly
+2. Check backend logs for Zep errors
+3. Ensure simulation IDs are consistent across rounds
+4. Verify memory storage in Zep dashboard
+
+### "Project not found" Error
+
+**Symptoms**: Zep returns project not found errors
+
+**Solutions**:
+1. Create a project in the Zep dashboard if required
+2. Verify your API key is associated with the correct project
+3. Check Zep configuration in MiroFish
+
+## Understanding Zep Usage in MiroFish
+
+### When Zep is Accessed
+
+MiroFish interacts with Zep during:
+
+1. **Simulation initialization**: Creating memory sessions for agents
+2. **Each agent action**: Storing decisions and outcomes
+3. **Inter-agent interactions**: Recording social interactions
+4. **Simulation analysis**: Retrieving historical data for reports
+
+### Memory Structure
+
+Zep stores different types of information:
+
+- **Agent memories**: Individual agent experiences and decisions
+- **Interaction history**: Who interacted with whom and how
+- **Event logs**: Significant simulation events
+- **Knowledge graphs**: Semantic relationships between concepts
+
+### Data Privacy
+
+Zep data considerations:
+
+- All data is stored in Zep Cloud's infrastructure
+- Review Zep's privacy policy for data handling details
+- For sensitive simulations, consider Zep's enterprise options with custom data residency
+
+## Optimizing Zep Usage
+
+### Reduce API Calls
+
+1. **Batch memory updates**: Group multiple memories into single API calls
+2. **Cache frequently accessed data**: Reduce redundant retrievals
+3. **Clean up old simulations**: Remove completed simulation data
+
+### Monitor Usage
+
+1. Check the Zep dashboard regularly for usage metrics
+2. Set up alerts for approaching limits
+3. Track which simulations consume the most memory operations
+
+### Efficient Memory Storage
+
+1. **Store essential information only**: Avoid redundant data
+2. **Use appropriate memory types**: Choose the right Zep memory structures
+3. **Archive old simulations**: Move historical data to long-term storage
+
+## Alternative Memory Solutions
+
+<Note>
+  While MiroFish is built for Zep Cloud, advanced users could potentially modify the codebase to use alternative memory services.
+</Note>
+
+If you need to use a different memory service:
+
+1. The Zep integration is in the backend codebase
+2. You would need to implement a compatible memory interface
+3. This requires modifying backend code and is not officially supported
+
+## Next Steps
+
+- [Environment Variables](/configuration/environment-variables) - Complete configuration reference
+- [LLM Setup](/configuration/llm-setup) - Configure your LLM provider
+- [Creating Simulations](/guides/running-simulations) - Start your first simulation
+- [Agent Configuration](/guides/agent-interactions) - Set up intelligent agents
+
+## Additional Resources
+
+- [Zep Cloud Documentation](https://docs.getzep.com/)
+- [Zep Cloud Dashboard](https://app.getzep.com/)
+- [Zep Pricing](https://www.getzep.com/pricing)
+- [Zep GitHub Repository](https://github.com/getzep/zep)

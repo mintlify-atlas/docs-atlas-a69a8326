@@ -1,0 +1,174 @@
+---
+title: Creating a Project
+description: Learn how to create and manage MiroFish projects with document upload and simulation requirements
+---
+
+## Overview
+
+A MiroFish project is the foundation of your swarm intelligence simulation. It contains your source documents, simulation requirements, and manages the complete workflow from document upload to knowledge graph construction.
+
+## Creating Your First Project
+
+<Steps>
+  <Step title="Prepare Your Documents">
+    Gather the documents you want to analyze. MiroFish supports multiple file formats:
+    
+    **Supported formats:**
+    - PDF (`.pdf`)
+    - Markdown (`.md`)
+    - Plain text (`.txt`)
+    
+    You can upload multiple documents in a single project.
+  </Step>
+
+  <Step title="Upload Documents and Define Requirements">
+    Create a new project by calling the ontology generation endpoint with your documents:
+    
+    ```bash POST /api/graph/ontology/generate
+    curl -X POST http://localhost:5000/api/graph/ontology/generate \
+      -F "files=@document1.pdf" \
+      -F "files=@document2.md" \
+      -F "simulation_requirement=Analyze student reactions to a new campus policy announcement" \
+      -F "project_name=Campus Policy Analysis" \
+      -F "additional_context=Focus on sentiment and discussion patterns"
+    ```
+    
+    **Required Parameters:**
+    - `files`: Your document files (at least one required)
+    - `simulation_requirement`: Description of what you want to simulate (required)
+    
+    **Optional Parameters:**
+    - `project_name`: A descriptive name for your project
+    - `additional_context`: Additional information to guide the analysis
+  </Step>
+
+  <Step title="Review Generated Ontology">
+    The API will extract text from your documents and generate an ontology (entity and relationship types). The response includes:
+    
+    ```json
+    {
+      "success": true,
+      "data": {
+        "project_id": "proj_abc123",
+        "project_name": "Campus Policy Analysis",
+        "ontology": {
+          "entity_types": [
+            {"name": "Student", "description": "University students"},
+            {"name": "Professor", "description": "Faculty members"},
+            {"name": "Policy", "description": "University policies"}
+          ],
+          "edge_types": [
+            {"name": "SUPPORTS", "description": "Expresses support for"},
+            {"name": "OPPOSES", "description": "Expresses opposition to"}
+          ]
+        },
+        "analysis_summary": "Generated 3 entity types and 2 relationship types...",
+        "files": [{"filename": "document1.pdf", "size": 245678}],
+        "total_text_length": 12345
+      }
+    }
+    ```
+    
+    Save the `project_id` - you'll need it for the next steps!
+  </Step>
+</Steps>
+
+## Managing Projects
+
+### View Project Details
+
+Retrieve information about a specific project:
+
+```bash GET /api/graph/project/{project_id}
+curl http://localhost:5000/api/graph/project/proj_abc123
+```
+
+### List All Projects
+
+Get a list of all your projects:
+
+```bash GET /api/graph/project/list
+curl http://localhost:5000/api/graph/project/list?limit=50
+```
+
+### Reset Project Status
+
+If you need to rebuild the knowledge graph, reset the project:
+
+```bash POST /api/graph/project/{project_id}/reset
+curl -X POST http://localhost:5000/api/graph/project/proj_abc123/reset
+```
+
+This resets the project to the "ontology generated" state, allowing you to rebuild the graph with different parameters.
+
+### Delete Project
+
+Remove a project and all associated data:
+
+```bash DELETE /api/graph/project/{project_id}
+curl -X DELETE http://localhost:5000/api/graph/project/proj_abc123
+```
+
+<Warning>
+  Deleting a project is permanent and will remove all associated files, ontologies, and graph data.
+</Warning>
+
+## Understanding Project Status
+
+Projects move through several status stages:
+
+- **Created**: Initial state after project creation
+- **Ontology Generated**: AI has analyzed documents and generated entity/relationship types
+- **Graph Building**: Knowledge graph is being constructed
+- **Graph Completed**: Knowledge graph is ready for simulation
+- **Failed**: An error occurred during processing
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Document Selection">
+    - Include documents that contain rich context about entities and their relationships
+    - For social media simulations, include background information about the topic and stakeholders
+    - Multiple shorter documents often work better than one very long document
+  </Accordion>
+
+  <Accordion title="Simulation Requirements">
+    Write clear, specific simulation requirements:
+    
+    **Good example:**
+    ```
+    "Simulate how students at Wuhan University would react on social media 
+    if the university announced a new dormitory curfew policy requiring 
+    all students to return by 11 PM."
+    ```
+    
+    **Poor example:**
+    ```
+    "Analyze student reactions"
+    ```
+    
+    Include:
+    - Who are the actors (students, faculty, etc.)
+    - What is the scenario or event
+    - What platform or context (social media, forums, etc.)
+  </Accordion>
+
+  <Accordion title="File Format Tips">
+    - **PDF**: Works best for formatted documents with clear structure
+    - **Markdown**: Ideal for structured content with clear sections
+    - **TXT**: Simple but effective for plain text content
+    - Ensure PDFs are text-based (not scanned images)
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Build Knowledge Graph" icon="diagram-project" href="/guides/building-graphs">
+    Learn how to construct your knowledge graph from the generated ontology
+  </Card>
+  
+  <Card title="Run Simulations" icon="play" href="/guides/running-simulations">
+    Start running swarm intelligence simulations with your project
+  </Card>
+</CardGroup>

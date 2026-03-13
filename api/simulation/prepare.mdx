@@ -1,0 +1,301 @@
+---
+title: "Prepare Simulation"
+description: "Prepare simulation environment with AI-generated agent profiles and configurations"
+---
+
+## Endpoint
+
+```
+POST /api/simulation/prepare
+```
+
+Prepares the simulation environment by reading entities from the knowledge graph, generating agent profiles using LLM, and creating simulation configurations. This is an asynchronous operation that returns a task ID for progress tracking.
+
+## Preparation Process
+
+The preparation involves four stages:
+
+1. **Reading Entities (0-20%)**: Reads and filters entities from the Zep knowledge graph
+2. **Generating Profiles (20-70%)**: Creates OASIS agent profiles for each entity using LLM
+3. **Generating Config (70-90%)**: LLM generates intelligent simulation parameters
+4. **Preparing Scripts (90-100%)**: Copies simulation runner scripts
+
+## Smart Caching
+
+The API automatically detects completed preparation work to avoid redundant operations. If preparation files already exist, it returns immediately with `already_prepared: true` unless you set `force_regenerate: true`.
+
+## Request Body
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID to prepare
+</ParamField>
+
+<ParamField path="entity_types" type="array">
+  Filter specific entity types from the graph (e.g., `["Student", "PublicFigure"]`). If not specified, uses all available entity types.
+</ParamField>
+
+<ParamField path="use_llm_for_profiles" type="boolean" default="true">
+  Use LLM to generate rich agent profiles with personality traits, interests, and behavior patterns
+</ParamField>
+
+<ParamField path="parallel_profile_count" type="number" default="5">
+  Number of profiles to generate in parallel (higher values = faster but more API usage)
+</ParamField>
+
+<ParamField path="force_regenerate" type="boolean" default="false">
+  Force regeneration even if preparation files already exist
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="simulation_id" type="string">
+    The simulation ID
+  </ResponseField>
+
+  <ResponseField name="task_id" type="string">
+    Task ID for tracking progress (only present when starting new preparation)
+  </ResponseField>
+
+  <ResponseField name="status" type="string">
+    Current status: `preparing` or `ready`
+  </ResponseField>
+
+  <ResponseField name="message" type="string">
+    Human-readable status message
+  </ResponseField>
+
+  <ResponseField name="already_prepared" type="boolean">
+    Whether preparation was already complete
+  </ResponseField>
+
+  <ResponseField name="expected_entities_count" type="number">
+    Expected number of agents to generate (only in new preparation)
+  </ResponseField>
+
+  <ResponseField name="entity_types" type="array">
+    List of entity types being processed
+  </ResponseField>
+
+  <ResponseField name="prepare_info" type="object">
+    Detailed preparation info (only when `already_prepared: true`)
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```json
+{
+  "simulation_id": "sim_def456",
+  "entity_types": ["Student", "Professor"],
+  "use_llm_for_profiles": true,
+  "parallel_profile_count": 5,
+  "force_regenerate": false
+}
+```
+
+## Example Response (New Preparation)
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_def456",
+    "task_id": "task_ghi789",
+    "status": "preparing",
+    "message": "准备任务已启动，请通过 /api/simulation/prepare/status 查询进度",
+    "already_prepared": false,
+    "expected_entities_count": 68,
+    "entity_types": ["Student", "Professor"]
+  }
+}
+```
+
+## Example Response (Already Prepared)
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_def456",
+    "status": "ready",
+    "message": "已有完成的准备工作，无需重复生成",
+    "already_prepared": true,
+    "prepare_info": {
+      "status": "ready",
+      "entities_count": 68,
+      "profiles_count": 68,
+      "entity_types": ["Student", "Professor"],
+      "config_generated": true,
+      "created_at": "2026-03-13T10:00:00Z",
+      "updated_at": "2026-03-13T10:15:00Z"
+    }
+  }
+}
+```
+
+## Check Preparation Status
+
+### Endpoint
+
+```
+POST /api/simulation/prepare/status
+```
+
+Query the progress of a preparation task. Supports two query methods:
+
+1. **By task_id**: Track an active preparation task
+2. **By simulation_id**: Check if preparation is already complete
+
+### Request Body
+
+<ParamField path="task_id" type="string">
+  Task ID returned from `/api/simulation/prepare`
+</ParamField>
+
+<ParamField path="simulation_id" type="string">
+  Simulation ID to check preparation status
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="task_id" type="string">
+    The task ID (if provided)
+  </ResponseField>
+
+  <ResponseField name="simulation_id" type="string">
+    The simulation ID
+  </ResponseField>
+
+  <ResponseField name="status" type="string">
+    Task status: `processing`, `completed`, `ready`, `failed`, or `not_started`
+  </ResponseField>
+
+  <ResponseField name="progress" type="number">
+    Progress percentage (0-100)
+  </ResponseField>
+
+  <ResponseField name="message" type="string">
+    Current operation description
+  </ResponseField>
+
+  <ResponseField name="progress_detail" type="object">
+    Detailed progress information including current stage, item counts, etc.
+  </ResponseField>
+
+  <ResponseField name="already_prepared" type="boolean">
+    Whether preparation is complete
+  </ResponseField>
+
+  <ResponseField name="prepare_info" type="object">
+    Detailed info when already prepared
+  </ResponseField>
+</ResponseField>
+
+### Example Status Request
+
+```json
+{
+  "task_id": "task_ghi789",
+  "simulation_id": "sim_def456"
+}
+```
+
+### Example Status Response (In Progress)
+
+```json
+{
+  "success": true,
+  "data": {
+    "task_id": "task_ghi789",
+    "simulation_id": "sim_def456",
+    "status": "processing",
+    "progress": 45,
+    "message": "[2/4] 生成Agent人设: 30/68 - Generating profile for Agent_30",
+    "progress_detail": {
+      "current_stage": "generating_profiles",
+      "current_stage_name": "生成Agent人设",
+      "stage_index": 2,
+      "total_stages": 4,
+      "stage_progress": 44,
+      "current_item": 30,
+      "total_items": 68,
+      "item_description": "Generating profile for Agent_30"
+    },
+    "already_prepared": false
+  }
+}
+```
+
+### Example Status Response (Complete)
+
+```json
+{
+  "success": true,
+  "data": {
+    "task_id": "task_ghi789",
+    "simulation_id": "sim_def456",
+    "status": "completed",
+    "progress": 100,
+    "message": "准备完成",
+    "already_prepared": true,
+    "prepare_info": {
+      "status": "ready",
+      "entities_count": 68,
+      "profiles_count": 68,
+      "config_generated": true
+    }
+  }
+}
+```
+
+## Generated Files
+
+The preparation process creates the following files in the simulation directory:
+
+- `state.json` - Simulation state metadata
+- `reddit_profiles.json` - Agent profiles for Reddit platform
+- `twitter_profiles.csv` - Agent profiles for Twitter platform
+- `simulation_config.json` - LLM-generated simulation configuration
+
+## Error Responses
+
+### Missing simulation_id
+
+```json
+{
+  "success": false,
+  "error": "请提供 simulation_id"
+}
+```
+
+### Simulation not found
+
+```json
+{
+  "success": false,
+  "error": "模拟不存在: sim_def456"
+}
+```
+
+### Missing simulation requirement
+
+```json
+{
+  "success": false,
+  "error": "项目缺少模拟需求描述 (simulation_requirement)"
+}
+```
+
+## Retry Mechanism
+
+Both profile generation and config generation include automatic retry mechanisms to handle LLM API failures gracefully.

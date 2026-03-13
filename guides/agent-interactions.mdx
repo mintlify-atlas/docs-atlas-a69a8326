@@ -1,0 +1,449 @@
+---
+title: Agent Interactions
+description: Chat with Report Agents and interview simulated agents to explore insights and perspectives
+---
+
+## Overview
+
+MiroFish provides two types of agent interactions:
+
+1. **Report Agent Chat**: Ask questions about simulation results and get insights backed by autonomous graph searches
+2. **Simulated Agent Interviews**: Chat directly with agents from your simulation to understand their perspectives
+
+## Chatting with the Report Agent
+
+The Report Agent can answer questions about your simulation by autonomously searching the knowledge graph and analyzing data.
+
+### Starting a Conversation
+
+<Steps>
+  <Step title="Ensure Report Exists">
+    First, check that your simulation has a completed report:
+    
+    ```bash GET /api/report/check/{simulation_id}
+    curl http://localhost:5000/api/report/check/sim_abc123
+    ```
+    
+    **Response:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_abc123",
+        "has_report": true,
+        "report_status": "completed",
+        "report_id": "report_xyz789",
+        "interview_unlocked": true
+      }
+    }
+    ```
+    
+    The `interview_unlocked` field indicates whether chat is available.
+  </Step>
+
+  <Step title="Send Your First Message">
+    Ask the Report Agent a question:
+    
+    ```bash POST /api/report/chat
+    curl -X POST http://localhost:5000/api/report/chat \
+      -H "Content-Type: application/json" \
+      -d '{
+        "simulation_id": "sim_abc123",
+        "message": "What were the main concerns students had about the curfew policy?",
+        "chat_history": []
+      }'
+    ```
+    
+    **Parameters:**
+    - `simulation_id` (required): Your simulation ID
+    - `message` (required): Your question or request
+    - `chat_history` (optional): Previous conversation messages
+  </Step>
+
+  <Step title="Review the Response">
+    The agent will autonomously search for information and respond:
+    
+    ```json
+    {
+      "success": true,
+      "data": {
+        "response": "Based on the simulation data, students expressed three main concerns about the curfew policy:\n\n1. **Academic Flexibility** (mentioned by 42% of student agents): Students worried about late-night study sessions, group projects, and library access after 11 PM.\n\n2. **Personal Freedom** (mentioned by 38% of student agents): Many felt the policy was overly restrictive and treated them like children rather than adults.\n\n3. **Safety Concerns** (mentioned by 23% of student agents): Some students mentioned they felt safer returning from late activities together rather than being forced to return by a specific time.\n\nThese concerns intensified over time, particularly after professor agents began defending the policy around hour 24 of the simulation.",
+        "tool_calls": [
+          {
+            "tool": "search_graph",
+            "query": "student concerns curfew policy",
+            "results_count": 28
+          },
+          {
+            "tool": "get_statistics",
+            "results_count": 1
+          }
+        ],
+        "sources": [
+          "Knowledge graph search: 28 relevant entities",
+          "Simulation data: 234 posts, 567 replies analyzed"
+        ]
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Continue the Conversation">
+    Ask follow-up questions by including chat history:
+    
+    ```bash
+    curl -X POST http://localhost:5000/api/report/chat \
+      -H "Content-Type: application/json" \
+      -d '{
+        "simulation_id": "sim_abc123",
+        "message": "Which student agents were most vocal about these concerns?",
+        "chat_history": [
+          {
+            "role": "user",
+            "content": "What were the main concerns students had about the curfew policy?"
+          },
+          {
+            "role": "assistant",
+            "content": "Based on the simulation data, students expressed three main concerns..."
+          }
+        ]
+      }'
+    ```
+    
+    The agent maintains context and can refer to previous messages.
+  </Step>
+</Steps>
+
+### Example Questions for Report Agent
+
+<AccordionGroup>
+  <Accordion title="Trend Analysis">
+    - "How did sentiment change over the course of the simulation?"
+    - "What events triggered the biggest shifts in opinion?"
+    - "Were there any surprising patterns in the data?"
+    - "Which time periods had the highest activity?"
+  </Accordion>
+
+  <Accordion title="Group Comparisons">
+    - "How did students' reactions differ from professors'?"
+    - "Which entity types were most supportive of the policy?"
+    - "Were there differences in sentiment across different agent groups?"
+    - "Who were the most influential agents?"
+  </Accordion>
+
+  <Accordion title="Specific Insights">
+    - "What were the most common arguments against the policy?"
+    - "Did anyone propose alternative solutions?"
+    - "Which posts generated the most engagement?"
+    - "What topics did agents discuss most frequently?"
+  </Accordion>
+
+  <Accordion title="Predictions & Recommendations">
+    - "What would happen if the policy was modified to allow academic exceptions?"
+    - "What communication strategy would be most effective?"
+    - "What are the biggest risks with implementing this policy?"
+    - "How can we address the main concerns?"
+  </Accordion>
+</AccordionGroup>
+
+## Understanding Report Agent Capabilities
+
+### Autonomous Tool Use
+
+The Report Agent can autonomously call tools to answer your questions:
+
+<CardGroup cols={2}>
+  <Card title="Graph Search" icon="magnifying-glass">
+    Searches the knowledge graph for entities, facts, and relationships.
+    
+    **Triggered by:** Questions about specific entities, facts, or "who/what/where"
+  </Card>
+  
+  <Card title="Statistics" icon="chart-bar">
+    Retrieves quantitative data and counts.
+    
+    **Triggered by:** Questions with "how many", "what percentage", counts
+  </Card>
+  
+  <Card title="Simulation Data" icon="database">
+    Accesses posts, replies, and interaction logs.
+    
+    **Triggered by:** Questions about "what did agents say", posts, discussions
+  </Card>
+  
+  <Card title="Insight Synthesis" icon="brain">
+    Combines multiple data sources into insights.
+    
+    **Triggered by:** "Why" questions, "explain", "analyze", "what caused"
+  </Card>
+</CardGroup>
+
+### Response Format
+
+Reponses include:
+
+- **response**: The agent's natural language answer
+- **tool_calls**: List of tools the agent used to find information
+- **sources**: Data sources consulted (graph, simulation logs, etc.)
+
+This transparency shows how the agent reached its conclusions.
+
+## Interviewing Simulated Agents
+
+<Note>
+  **Coming in future version**: Direct interviews with simulated agents from your simulation. Each agent will respond in character based on their personality, knowledge, and simulated experiences.
+</Note>
+
+### How Agent Interviews Will Work
+
+**Each simulated agent:**
+- Maintains their personality and perspective from the simulation
+- Has memory of their posts, replies, and interactions
+- Can explain their reasoning and opinions
+- Responds consistently with their character profile
+
+**Example interview:**
+
+```bash
+# Future endpoint (not yet implemented)
+POST /api/simulation/interview
+{
+  "simulation_id": "sim_abc123",
+  "agent_id": "agent_student_001",
+  "message": "Why did you oppose the curfew policy?"
+}
+```
+
+**Example response:**
+```json
+{
+  "agent_id": "agent_student_001",
+  "agent_name": "John Smith",
+  "response": "As a CS major who regularly works on projects until 2 AM, the 11 PM curfew would seriously disrupt my academic schedule. Many of my teammates and I do our best work late at night when the labs are quiet. I proposed in my posts that the policy should have exceptions for academic activities, but that concern wasn't addressed.",
+  "metadata": {
+    "entity_type": "Student",
+    "stance": "opposed",
+    "post_count": 12,
+    "reply_count": 34
+  }
+}
+```
+
+### Planned Interview Features
+
+<CardGroup cols={2}>
+  <Card title="In-Character Responses">
+    Agents respond based on their simulation personality, knowledge, and experiences.
+  </Card>
+  
+  <Card title="Memory Access">
+    Agents can recall their posts, who they interacted with, and what they discussed.
+  </Card>
+  
+  <Card title="Opinion Explanations">
+    Ask agents to explain their stances, reasoning, and how their views evolved.
+  </Card>
+  
+  <Card title="Relationship Queries">
+    Ask about relationships with other agents and whose opinions influenced them.
+  </Card>
+</CardGroup>
+
+## Best Practices for Agent Chat
+
+### Effective Questions
+
+<Tabs>
+  <Tab title="Do">
+    **Be specific:**
+    - "What were the top 3 concerns mentioned by student agents in the first 48 hours?"
+    - "Which professor agents switched their position during the simulation?"
+    
+    **Ask for evidence:**
+    - "What data supports this conclusion?"
+    - "Can you show examples of posts expressing this sentiment?"
+    
+    **Explore causality:**
+    - "What caused the sentiment shift at hour 72?"
+    - "Why did engagement spike during that time period?"
+    
+    **Request actionable insights:**
+    - "What would mitigate these concerns?"
+    - "How should the communication strategy be adjusted?"
+  </Tab>
+  
+  <Tab title="Don't">
+    **Avoid vague questions:**
+    - ❌ "Tell me about the simulation"
+    - ✅ "What were the key trends in student sentiment?"
+    
+    **Don't assume data not in simulation:**
+    - ❌ "What happened in real life after this?"
+    - ✅ "What does the simulation predict would happen?"
+    
+    **Don't ask for data the agent can't access:**
+    - ❌ "What's in the original PDF documents?"
+    - ✅ "What entity relationships did the graph extract?"
+    
+    **Avoid yes/no questions:**
+    - ❌ "Did students oppose the policy?"
+    - ✅ "What was the distribution of student opinions on the policy?"
+  </Tab>
+</Tabs>
+
+### Managing Chat History
+
+Include relevant conversation history for context:
+
+```json
+{
+  "chat_history": [
+    {"role": "user", "content": "What were the main concerns?"},
+    {"role": "assistant", "content": "The three main concerns were..."},
+    {"role": "user", "content": "Which group was most concerned about safety?"},
+    {"role": "assistant", "content": "Student agents mentioned safety in 23% of cases..."}
+  ]
+}
+```
+
+**Tips:**
+- Include 3-5 recent message pairs for context
+- Don't send entire conversation history (increases latency)
+- Focus on messages relevant to current question
+
+## Understanding Tool Calls
+
+When the Report Agent responds, you can see which tools it used:
+
+```json
+{
+  "tool_calls": [
+    {
+      "tool": "search_graph",
+      "query": "students academic flexibility concerns",
+      "results_count": 18,
+      "execution_time": 2.3
+    },
+    {
+      "tool": "get_statistics",
+      "metric": "entity_type_distribution",
+      "results_count": 1,
+      "execution_time": 0.5
+    }
+  ]
+}
+```
+
+This shows:
+- What information the agent searched for
+- How many results were found
+- How long each search took
+
+You can use this to understand the agent's reasoning process.
+
+## Optimizing Interview Prompt
+
+The system automatically optimizes interview prompts to prevent agents from calling tools when they should respond directly in character.
+
+### Automatic Optimization
+
+When interviewing simulated agents (future feature), prompts are prefixed with:
+
+```
+"Based on your personality, memories, and all past actions, 
+respond directly in text without calling any tools:"
+```
+
+This ensures agents:
+- Stay in character
+- Use their simulated knowledge
+- Don't break immersion by calling external tools
+- Respond naturally as they would in the simulation
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Report Agent says 'No data found'">
+    - Question may be too specific for available data
+    - Try broader queries first, then narrow down
+    - Check that simulation generated sufficient interactions
+    - Verify graph_id is correct and accessible
+  </Accordion>
+
+  <Accordion title="Responses are too generic">
+    - Ask more specific questions with details
+    - Request quantitative data (percentages, counts)
+    - Ask for examples and specific entity names
+    - Include chat history for context
+  </Accordion>
+
+  <Accordion title="Agent doesn't use tools">
+    - Question may be answerable from report alone
+    - Try questions requiring specific data retrieval
+    - Ask about entities, counts, or specific facts
+    - Check tool_calls array in response to see what was used
+  </Accordion>
+
+  <Accordion title="Chat history not maintained">
+    - Ensure you're including chat_history in request
+    - Use proper format: array of {role, content} objects
+    - Don't exceed ~10 message pairs in history
+    - Verify JSON is properly formatted
+  </Accordion>
+</AccordionGroup>
+
+## API Reference
+
+### Report Agent Chat
+
+```bash POST /api/report/chat
+{
+  "simulation_id": "sim_abc123",
+  "message": "Your question",
+  "chat_history": [
+    {"role": "user", "content": "Previous question"},
+    {"role": "assistant", "content": "Previous answer"}
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "response": "Agent's answer",
+    "tool_calls": [{"tool": "...", "query": "..."}],
+    "sources": ["Knowledge graph", "Simulation logs"]
+  }
+}
+```
+
+### Check Interview Availability
+
+```bash GET /api/report/check/{simulation_id}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "has_report": true,
+    "report_status": "completed",
+    "interview_unlocked": true
+  }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Generate Reports" icon="file-chart-line" href="/guides/generating-reports">
+    Create comprehensive analysis reports from your simulations
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/graph/ontology-generate">
+    Explore the complete API documentation
+  </Card>
+</CardGroup>

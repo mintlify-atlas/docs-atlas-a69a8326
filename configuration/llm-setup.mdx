@@ -1,0 +1,291 @@
+---
+title: 'LLM Setup'
+description: 'Configure LLM providers for MiroFish swarm intelligence simulations'
+icon: 'brain'
+---
+
+## Overview
+
+MiroFish requires a Large Language Model (LLM) to power the AI agents in your swarm intelligence simulations. The system supports any OpenAI-compatible API, giving you flexibility in choosing your provider.
+
+<Note>
+  MiroFish uses the OpenAI SDK format, which means any LLM provider that implements OpenAI-compatible endpoints will work.
+</Note>
+
+## Recommended Provider: Alibaba Qwen
+
+The MiroFish team recommends using **Alibaba Qwen-plus** model for optimal performance and cost-effectiveness.
+
+### Why Qwen-plus?
+
+- **Cost-effective**: More affordable than GPT-4 while maintaining high quality
+- **Performance**: Excellent performance for agent-based simulations
+- **Chinese language support**: Native Chinese language capabilities (useful for the MiroFish development team)
+- **OpenAI compatibility**: Works seamlessly with OpenAI SDK format
+
+### Setting Up Alibaba Qwen
+
+1. **Create an account** at Alibaba Cloud DashScope:
+   - Visit: [https://bailian.console.aliyun.com/](https://bailian.console.aliyun.com/)
+   - Sign up for an account
+
+2. **Get your API key**:
+   - Navigate to the API credentials section
+   - Generate a new API key
+   - Copy the key securely
+
+3. **Configure MiroFish**:
+
+Add the following to your `.env` file:
+
+```bash
+LLM_API_KEY=your_dashscope_api_key_here
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL_NAME=qwen-plus
+```
+
+<Warning>
+  Keep your API key secure. Never commit it to version control or share it publicly.
+</Warning>
+
+## Alternative Providers
+
+MiroFish works with any OpenAI-compatible API provider:
+
+### OpenAI
+
+Use official OpenAI models:
+
+```bash
+LLM_API_KEY=sk-your_openai_api_key
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL_NAME=gpt-4o-mini
+```
+
+**Recommended models:**
+- `gpt-4o-mini` - Best cost/performance ratio
+- `gpt-4o` - Higher quality, more expensive
+- `gpt-3.5-turbo` - Budget option
+
+### Azure OpenAI
+
+For Azure OpenAI Service:
+
+```bash
+LLM_API_KEY=your_azure_api_key
+LLM_BASE_URL=https://your-resource.openai.azure.com/openai/deployments/your-deployment
+LLM_MODEL_NAME=gpt-4
+```
+
+### Anthropic Claude (via OpenAI Compatibility)
+
+Some proxy services offer OpenAI-compatible endpoints for Claude:
+
+```bash
+LLM_API_KEY=your_api_key
+LLM_BASE_URL=https://your-proxy-service.com/v1
+LLM_MODEL_NAME=claude-3-5-sonnet-20241022
+```
+
+### Local Models (Ollama, LM Studio)
+
+Run models locally with Ollama or LM Studio:
+
+```bash
+LLM_API_KEY=not-needed
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_MODEL_NAME=llama2
+```
+
+<Note>
+  Local models may have reduced performance compared to cloud providers, especially for complex simulations.
+</Note>
+
+### Other Compatible Providers
+
+- **Together AI**: Fast inference with various open-source models
+- **Anyscale**: Scalable LLM inference
+- **Groq**: Ultra-fast inference speeds
+- **DeepSeek**: Cost-effective Chinese provider
+- **Moonshot AI**: Chinese provider with competitive pricing
+
+## Cost Considerations
+
+LLM API costs can add up quickly during simulations, especially with many agents and rounds.
+
+### Estimating Costs
+
+A typical simulation involves:
+- **Agent actions**: Each agent makes decisions every round
+- **Platform interactions**: Social media platform simulations
+- **Report generation**: Analysis of simulation results
+
+For a simulation with:
+- 10 agents
+- 30 rounds
+- Twitter and Reddit platforms
+
+Expect approximately **300-500 API calls** (varies by agent activity).
+
+<Warning>
+  Start with small simulations (under 40 rounds) to understand costs before scaling up.
+</Warning>
+
+### Cost Optimization Tips
+
+1. **Start small**: Test with 10-20 rounds initially
+2. **Use efficient models**: `qwen-plus` or `gpt-4o-mini` offer good performance/cost ratios
+3. **Monitor usage**: Track API usage through your provider's dashboard
+4. **Set limits**: Configure spending limits in your provider account
+5. **Use boost configuration strategically**: Only enable parallel LLM when needed for speed
+
+## Advanced: Dual LLM Configuration
+
+For high-throughput parallel simulations, you can configure a second "boost" LLM:
+
+```bash
+# Primary LLM
+LLM_API_KEY=your_primary_api_key
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL_NAME=qwen-plus
+
+# Boost LLM (optional, for parallel simulations)
+LLM_BOOST_API_KEY=your_secondary_api_key
+LLM_BOOST_BASE_URL=https://api.openai.com/v1
+LLM_BOOST_MODEL_NAME=gpt-4o-mini
+```
+
+### How Boost Configuration Works
+
+When running parallel simulations on multiple platforms (e.g., Twitter and Reddit simultaneously):
+
+- **Platform 1** uses the primary LLM configuration
+- **Platform 2** uses the boost LLM configuration
+
+This distributes load across multiple providers, avoiding rate limits and improving speed.
+
+<Tip>
+  You can use different providers for primary and boost (e.g., Qwen for primary, OpenAI for boost) to maximize throughput.
+</Tip>
+
+<Warning>
+  If you don't need parallel simulation speedup, do NOT include boost variables in your `.env` file. Their presence affects simulation behavior.
+</Warning>
+
+## Testing Your LLM Connection
+
+After configuration, test your LLM connection:
+
+### 1. Start MiroFish
+
+```bash
+# Docker
+docker-compose up -d
+
+# Source
+npm run dev
+```
+
+### 2. Check Backend Logs
+
+Look for configuration validation messages:
+
+```bash
+# Docker
+docker logs mirofish
+
+# Source
+# Check the terminal where backend is running
+```
+
+You should see no errors about missing `LLM_API_KEY`.
+
+### 3. Run a Test Simulation
+
+Create a small test simulation:
+- 2-3 agents
+- 5 rounds maximum
+- Single platform (Twitter or Reddit)
+
+If the simulation starts and agents begin taking actions, your LLM is configured correctly.
+
+## Troubleshooting
+
+### "LLM_API_KEY not configured" Error
+
+**Solution**: Ensure your `.env` file exists in the project root and contains:
+
+```bash
+LLM_API_KEY=your_actual_api_key
+```
+
+Restart MiroFish after adding the key.
+
+### API Rate Limit Errors
+
+**Symptoms**: Simulation fails with rate limit messages
+
+**Solutions**:
+1. Reduce concurrent simulations
+2. Add boost LLM configuration to distribute load
+3. Upgrade your API provider plan
+4. Add delays between simulation rounds
+
+### Connection Timeout Errors
+
+**Symptoms**: Requests to LLM API timeout
+
+**Solutions**:
+1. Check your internet connection
+2. Verify `LLM_BASE_URL` is correct
+3. Check if your provider has outages
+4. Try a different provider
+
+### Invalid Model Name
+
+**Symptoms**: "Model not found" or similar errors
+
+**Solution**: Verify your model name is correct for your provider:
+- OpenAI: `gpt-4o-mini`, `gpt-4o`, `gpt-3.5-turbo`
+- Qwen: `qwen-plus`, `qwen-turbo`, `qwen-max`
+- Check your provider's documentation for available models
+
+### High Latency / Slow Responses
+
+**Symptoms**: Simulations run very slowly
+
+**Solutions**:
+1. Switch to a faster provider (e.g., Groq, OpenAI)
+2. Use a smaller/faster model
+3. Enable boost configuration for parallel processing
+4. Check your network connection
+5. Consider geographic proximity to provider's servers
+
+## Model Selection Guide
+
+### For Best Cost Efficiency
+- **Alibaba Qwen-plus**: Best overall value
+- **OpenAI GPT-4o-mini**: Good OpenAI option
+- **DeepSeek**: Very low cost, decent quality
+
+### For Best Performance
+- **OpenAI GPT-4o**: Highest quality
+- **Alibaba Qwen-max**: High quality, better pricing than GPT-4
+- **Claude 3.5 Sonnet**: Excellent reasoning (via proxy)
+
+### For Speed
+- **Groq**: Ultra-fast inference
+- **Together AI**: Fast open-source models
+- **OpenAI GPT-4o-mini**: Good speed/quality balance
+
+### For Local/Private Deployment
+- **Ollama + Llama 2/3**: Free, private, slower
+- **LM Studio**: Easy local setup
+- **vLLM**: Production-grade local inference
+
+## Next Steps
+
+- [Environment Variables](/configuration/environment-variables) - Complete configuration reference
+- [Zep Cloud Setup](/configuration/zep-cloud) - Configure memory system
+- [Creating Simulations](/guides/running-simulations) - Run your first simulation
+- [Understanding Results](/guides/generating-reports) - Analyze simulation output

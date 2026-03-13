@@ -1,0 +1,555 @@
+---
+title: Installation
+description: Set up MiroFish locally with source code or Docker
+---
+
+MiroFish can be installed in two ways: from source code (recommended for development) or using Docker (recommended for quick deployment).
+
+## Prerequisites
+
+Before installing MiroFish, ensure you have the following:
+
+### System Requirements
+
+<CardGroup cols={3}>
+  <Card title="Node.js" icon="node-js">
+    **Version 18 or higher**
+    
+    Includes npm package manager
+  </Card>
+  
+  <Card title="Python" icon="python">
+    **Version ≥3.11 and ≤3.12**
+    
+    Backend runtime environment
+  </Card>
+  
+  <Card title="uv" icon="package">
+    **Latest version**
+    
+    Python package manager
+  </Card>
+</CardGroup>
+
+### Verify Installations
+
+Check that all prerequisites are correctly installed:
+
+```bash
+# Check Node.js version (should be 18+)
+node -v
+
+# Check Python version (should be 3.11 or 3.12)
+python --version
+
+# Check uv installation
+uv --version
+```
+
+<Warning>
+Python 3.13+ is not currently supported. Make sure you're using Python 3.11 or 3.12.
+</Warning>
+
+### API Keys Required
+
+MiroFish requires API access to:
+
+1. **LLM API** (OpenAI SDK compatible)
+   - Recommended: [Alibaba Qwen-plus](https://bailian.console.aliyun.com/) via Bailian Platform
+   - Alternatives: OpenAI, Azure OpenAI, or any OpenAI-compatible API
+
+2. **Zep Cloud** (for memory management)
+   - Sign up at [https://app.getzep.com/](https://app.getzep.com/)
+   - Free monthly quota is sufficient for simple usage
+
+<Note>
+Prepare your API keys before proceeding. You'll need them during configuration.
+</Note>
+
+## Option 1: Source Code Installation (Recommended)
+
+Source code installation gives you full control and is recommended for development or customization.
+
+<Steps>
+  <Step title="Clone the Repository">
+    ```bash
+    git clone https://github.com/666ghj/MiroFish.git
+    cd MiroFish
+    ```
+  </Step>
+  
+  <Step title="Configure Environment Variables">
+    Copy the example environment file and configure your API keys:
+    
+    ```bash
+    # Copy the example configuration
+    cp .env.example .env
+    ```
+    
+    Edit the `.env` file with your preferred text editor:
+    
+    <CodeGroup>
+    ```env Required Configuration
+    # LLM API Configuration
+    # Supports any LLM API with OpenAI SDK format
+    LLM_API_KEY=your_api_key_here
+    LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+    LLM_MODEL_NAME=qwen-plus
+    
+    # Zep Cloud Configuration
+    # Free monthly quota available at https://app.getzep.com/
+    ZEP_API_KEY=your_zep_api_key_here
+    ```
+    
+    ```env Optional Boost Configuration
+    # Optional: Accelerated LLM for faster processing
+    # Only include if you want to use a secondary faster model
+    LLM_BOOST_API_KEY=your_boost_api_key_here
+    LLM_BOOST_BASE_URL=your_boost_base_url_here
+    LLM_BOOST_MODEL_NAME=your_boost_model_name_here
+    ```
+    </CodeGroup>
+    
+    <Warning>
+    **Important**: Replace `your_api_key_here` and `your_zep_api_key_here` with your actual API keys. The application will not start without valid keys.
+    </Warning>
+  </Step>
+  
+  <Step title="Install Dependencies">
+    MiroFish provides convenient npm scripts to install all dependencies.
+    
+    <Tabs>
+      <Tab title="One-Click Installation (Recommended)">
+        Install all dependencies (root, frontend, and backend) in one command:
+        
+        ```bash
+        npm run setup:all
+        ```
+        
+        This command will:
+        1. Install root Node.js dependencies
+        2. Install frontend dependencies
+        3. Install Python backend dependencies in a virtual environment (via uv)
+      </Tab>
+      
+      <Tab title="Step-by-Step Installation">
+        If you prefer to install dependencies separately:
+        
+        ```bash
+        # Install Node.js dependencies (root + frontend)
+        npm run setup
+        
+        # Install Python dependencies (backend)
+        # Automatically creates a virtual environment using uv
+        npm run setup:backend
+        ```
+      </Tab>
+      
+      <Tab title="Manual Installation">
+        If you want full control:
+        
+        ```bash
+        # Root dependencies
+        npm install
+        
+        # Frontend dependencies
+        cd frontend
+        npm install
+        cd ..
+        
+        # Backend dependencies
+        cd backend
+        uv sync
+        cd ..
+        ```
+      </Tab>
+    </Tabs>
+    
+    <Note>
+    The `uv sync` command automatically creates a virtual environment and installs all Python dependencies listed in `pyproject.toml`, including Flask, OpenAI SDK, Zep Cloud, OASIS, and more.
+    </Note>
+  </Step>
+  
+  <Step title="Start the Services">
+    Launch both frontend and backend services:
+    
+    <Tabs>
+      <Tab title="Start Both Services">
+        ```bash
+        # From the project root directory
+        npm run dev
+        ```
+        
+        This uses `concurrently` to start both services simultaneously with color-coded output:
+        - 🟢 Backend (green)
+        - 🔵 Frontend (cyan)
+      </Tab>
+      
+      <Tab title="Start Services Individually">
+        ```bash
+        # Terminal 1: Start backend only
+        npm run backend
+        
+        # Terminal 2: Start frontend only (in a new terminal)
+        npm run frontend
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  
+  <Step title="Verify Installation">
+    Check that both services are running:
+    
+    <Tabs>
+      <Tab title="Frontend">
+        Open your browser and navigate to:
+        
+        ```
+        http://localhost:3000
+        ```
+        
+        You should see the MiroFish web interface.
+      </Tab>
+      
+      <Tab title="Backend API">
+        Check the backend API is responding:
+        
+        ```
+        http://localhost:5001
+        ```
+        
+        You should see API information or a health check response.
+      </Tab>
+    </Tabs>
+    
+    <Warning>
+    If services fail to start, check the console output for errors. Common issues:
+    - Missing or invalid API keys in `.env`
+    - Port 3000 or 5001 already in use
+    - Python version incompatibility
+    </Warning>
+  </Step>
+</Steps>
+
+## Option 2: Docker Installation
+
+Docker installation is the fastest way to get MiroFish running without managing dependencies.
+
+<Steps>
+  <Step title="Prerequisites">
+    Ensure Docker and Docker Compose are installed:
+    
+    ```bash
+    # Check Docker installation
+    docker --version
+    
+    # Check Docker Compose installation
+    docker compose version
+    ```
+    
+    If not installed, visit [Docker's official website](https://docs.docker.com/get-docker/) for installation instructions.
+  </Step>
+  
+  <Step title="Clone and Configure">
+    ```bash
+    # Clone the repository
+    git clone https://github.com/666ghj/MiroFish.git
+    cd MiroFish
+    
+    # Configure environment variables
+    cp .env.example .env
+    ```
+    
+    Edit `.env` with your API keys (same as source installation):
+    
+    ```env
+    LLM_API_KEY=your_api_key_here
+    LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+    LLM_MODEL_NAME=qwen-plus
+    ZEP_API_KEY=your_zep_api_key_here
+    ```
+  </Step>
+  
+  <Step title="Start with Docker Compose">
+    ```bash
+    # Pull image and start services in detached mode
+    docker compose up -d
+    ```
+    
+    Docker will:
+    1. Pull the `ghcr.io/666ghj/mirofish:latest` image
+    2. Read environment variables from `.env`
+    3. Map ports 3000 (frontend) and 5001 (backend)
+    4. Mount `./backend/uploads` for persistent data
+    5. Start the container
+    
+    <Note>
+    **Slow Pull?** The `docker-compose.yml` includes a commented mirror address. If pulling is slow, edit the file and uncomment:
+    
+    ```yaml
+    # image: ghcr.io/666ghj/mirofish:latest
+    image: ghcr.nju.edu.cn/666ghj/mirofish:latest  # Mirror
+    ```
+    </Note>
+  </Step>
+  
+  <Step title="Verify Installation">
+    Check that the container is running:
+    
+    ```bash
+    # View running containers
+    docker compose ps
+    
+    # View logs
+    docker compose logs -f
+    ```
+    
+    Access the services:
+    - Frontend: [http://localhost:3000](http://localhost:3000)
+    - Backend: [http://localhost:5001](http://localhost:5001)
+  </Step>
+</Steps>
+
+### Docker Management Commands
+
+<CodeGroup>
+```bash Stop Services
+# Stop without removing containers
+docker compose stop
+
+# Stop and remove containers
+docker compose down
+```
+
+```bash View Logs
+# Follow all logs
+docker compose logs -f
+
+# View specific service logs
+docker compose logs -f mirofish
+```
+
+```bash Restart Services
+# Restart all services
+docker compose restart
+
+# Pull latest image and restart
+docker compose pull
+docker compose up -d
+```
+
+```bash Clean Up
+# Remove containers and volumes
+docker compose down -v
+
+# Remove containers, volumes, and images
+docker compose down -v --rmi all
+```
+</CodeGroup>
+
+## Configuration Details
+
+### Required Environment Variables
+
+These variables must be set in `.env`:
+
+| Variable | Description | Example |
+|----------|-------------|----------|
+| `LLM_API_KEY` | Your LLM API key | `sk-xxx...` |
+| `LLM_BASE_URL` | LLM API endpoint | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| `LLM_MODEL_NAME` | Model to use | `qwen-plus` |
+| `ZEP_API_KEY` | Zep Cloud API key for memory | `z_xxx...` |
+
+### Optional Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `LLM_BOOST_API_KEY` | Optional faster LLM for acceleration | - |
+| `LLM_BOOST_BASE_URL` | Boost LLM endpoint | - |
+| `LLM_BOOST_MODEL_NAME` | Boost model name | - |
+| `FLASK_HOST` | Backend host address | `0.0.0.0` |
+| `FLASK_PORT` | Backend port | `5001` |
+
+<Warning>
+If you don't use boost configuration, **remove** those variables entirely from `.env`. Don't leave them with placeholder values.
+</Warning>
+
+## Port Configuration
+
+### Default Ports
+
+| Service | Port | URL |
+|---------|------|-----|
+| Frontend | 3000 | `http://localhost:3000` |
+| Backend API | 5001 | `http://localhost:5001` |
+
+### Changing Ports
+
+<Tabs>
+  <Tab title="Source Installation">
+    Edit `.env` file:
+    
+    ```env
+    FLASK_PORT=8080  # Change backend port
+    ```
+    
+    For frontend port, edit `frontend/package.json` or pass via npm:
+    
+    ```bash
+    PORT=8000 npm run frontend
+    ```
+  </Tab>
+  
+  <Tab title="Docker Installation">
+    Edit `docker-compose.yml`:
+    
+    ```yaml
+    ports:
+      - "8000:3000"  # Map external 8000 to container 3000
+      - "8080:5001"  # Map external 8080 to container 5001
+    ```
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Configuration Errors on Startup">
+    **Error**: "配置错误" or "Configuration errors"
+    
+    **Solution**:
+    1. Check `.env` file exists in project root
+    2. Verify all required variables are set
+    3. Ensure no quotes around values (unless necessary)
+    4. Remove boost variables if not used
+    
+    The backend validates configuration on startup (see `backend/run.py:27-34`).
+  </Accordion>
+  
+  <Accordion title="Python Version Issues">
+    **Error**: Python version incompatibility
+    
+    **Solution**:
+    ```bash
+    # Check your Python version
+    python --version
+    
+    # If needed, use pyenv or conda to install Python 3.11 or 3.12
+    # Example with pyenv:
+    pyenv install 3.12
+    pyenv local 3.12
+    ```
+    
+    The `pyproject.toml` requires `>=3.11`.
+  </Accordion>
+  
+  <Accordion title="Port Already in Use">
+    **Error**: Port 3000 or 5001 already in use
+    
+    **Solution**:
+    ```bash
+    # Find what's using the port (Linux/Mac)
+    lsof -i :3000
+    lsof -i :5001
+    
+    # Windows
+    netstat -ano | findstr :3000
+    netstat -ano | findstr :5001
+    
+    # Kill the process or change ports (see Port Configuration above)
+    ```
+  </Accordion>
+  
+  <Accordion title="uv Command Not Found">
+    **Error**: `uv: command not found`
+    
+    **Solution**:
+    Install uv package manager:
+    
+    ```bash
+    # Using pip
+    pip install uv
+    
+    # Or using official installer
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+  </Accordion>
+  
+  <Accordion title="Docker Permission Denied">
+    **Error**: Permission denied while connecting to Docker daemon
+    
+    **Solution**:
+    ```bash
+    # Add your user to docker group (Linux)
+    sudo usermod -aG docker $USER
+    newgrp docker
+    
+    # Or run with sudo (not recommended for regular use)
+    sudo docker compose up -d
+    ```
+  </Accordion>
+  
+  <Accordion title="Frontend Can't Connect to Backend">
+    **Error**: Network errors or API connection failures
+    
+    **Solution**:
+    1. Verify backend is running on port 5001
+    2. Check CORS configuration (should be enabled via `flask-cors`)
+    3. Ensure no firewall blocking
+    4. Check frontend API endpoint configuration
+  </Accordion>
+</AccordionGroup>
+
+## Verification Checklist
+
+After installation, verify everything is working:
+
+<Steps>
+  <Step title="Service Health">
+    - [ ] Frontend loads at `http://localhost:3000`
+    - [ ] Backend responds at `http://localhost:5001`
+    - [ ] No errors in console output
+  </Step>
+  
+  <Step title="API Configuration">
+    - [ ] `.env` file exists with valid keys
+    - [ ] LLM API key is valid
+    - [ ] Zep API key is valid
+    - [ ] Backend validates configuration successfully
+  </Step>
+  
+  <Step title="Dependencies">
+    - [ ] Node.js 18+ installed
+    - [ ] Python 3.11 or 3.12 installed
+    - [ ] uv package manager installed
+    - [ ] All npm packages installed
+    - [ ] All Python packages installed
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Run your first simulation in under 10 minutes
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/configuration">
+    Learn about advanced configuration options
+  </Card>
+  
+  <Card title="Architecture" icon="diagram-project" href="/concepts/overview">
+    Understand how MiroFish works under the hood
+  </Card>
+  
+  <Card title="Troubleshooting" icon="wrench" href="/deployment/docker#troubleshooting">
+    Get help with common issues
+  </Card>
+</CardGroup>
+
+<Note>
+**Need Help?** Join the community:
+- Discord: [MiroFish Discord](https://discord.com/channels/1469200078932545606/1469201282077163739)
+- X (Twitter): [@mirofish_ai](https://x.com/mirofish_ai)
+- Email: mirofish@shanda.com
+</Note>

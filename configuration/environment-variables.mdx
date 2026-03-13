@@ -1,0 +1,306 @@
+---
+title: 'Environment Variables'
+description: 'Complete guide to configuring MiroFish through environment variables'
+icon: 'gear'
+---
+
+## Overview
+
+MiroFish uses environment variables to configure all aspects of the application, including LLM providers, memory systems, and simulation parameters. Configuration is managed through a `.env` file in the project root directory.
+
+## Configuration File Location
+
+The configuration file should be placed at:
+
+```
+MiroFish/.env
+```
+
+The backend automatically loads configuration from this location (see `backend/app/config.py:11`).
+
+<Note>
+  A template file `.env.example` is provided in the repository. Copy this file to `.env` and update the values with your actual credentials.
+</Note>
+
+## Required Variables
+
+These variables **must** be set for MiroFish to function properly:
+
+### LLM_API_KEY
+
+**Type:** String  
+**Required:** Yes  
+**Default:** None
+
+API key for your LLM provider. MiroFish supports any OpenAI-compatible API.
+
+```bash
+LLM_API_KEY=your_api_key_here
+```
+
+<Warning>
+  Never commit your actual API key to version control. Keep your `.env` file private.
+</Warning>
+
+### ZEP_API_KEY
+
+**Type:** String  
+**Required:** Yes  
+**Default:** None
+
+API key for Zep Cloud memory service. Required for the memory graph functionality.
+
+```bash
+ZEP_API_KEY=your_zep_api_key_here
+```
+
+See the [Zep Cloud Setup](/configuration/zep-cloud) guide for details on obtaining this key.
+
+## LLM Configuration
+
+### LLM_BASE_URL
+
+**Type:** String  
+**Required:** No  
+**Default:** `https://api.openai.com/v1`
+
+Base URL for your LLM API endpoint. The default example configuration uses Alibaba's Qwen service:
+
+```bash
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+```
+
+See [LLM Setup](/configuration/llm-setup) for supported providers.
+
+### LLM_MODEL_NAME
+
+**Type:** String  
+**Required:** No  
+**Default:** `gpt-4o-mini`
+
+Name of the LLM model to use. Example:
+
+```bash
+LLM_MODEL_NAME=qwen-plus
+```
+
+<Tip>
+  The recommended model is `qwen-plus` from Alibaba Qwen for cost-effectiveness and performance.
+</Tip>
+
+## Advanced LLM Configuration (Optional)
+
+For parallel simulations, you can configure a second "boost" LLM to increase throughput by distributing requests across multiple API providers:
+
+### LLM_BOOST_API_KEY
+
+**Type:** String  
+**Required:** No  
+**Default:** None
+
+API key for the secondary LLM provider used during parallel simulations.
+
+```bash
+LLM_BOOST_API_KEY=your_api_key_here
+```
+
+### LLM_BOOST_BASE_URL
+
+**Type:** String  
+**Required:** No  
+**Default:** None
+
+Base URL for the secondary LLM provider.
+
+```bash
+LLM_BOOST_BASE_URL=your_base_url_here
+```
+
+### LLM_BOOST_MODEL_NAME
+
+**Type:** String  
+**Required:** No  
+**Default:** None
+
+Model name for the secondary LLM provider.
+
+```bash
+LLM_BOOST_MODEL_NAME=your_model_name_here
+```
+
+<Warning>
+  If you don't plan to use boost configuration, do not include these variables in your `.env` file at all. The presence of these variables affects parallel simulation behavior.
+</Warning>
+
+## Flask Configuration
+
+### SECRET_KEY
+
+**Type:** String  
+**Required:** No  
+**Default:** `mirofish-secret-key`
+
+Flask secret key for session management. The default value is used if not specified.
+
+### FLASK_DEBUG
+
+**Type:** Boolean  
+**Required:** No  
+**Default:** `True`
+
+Enables Flask debug mode. Set to `false` in production:
+
+```bash
+FLASK_DEBUG=false
+```
+
+## Simulation Configuration
+
+### OASIS_DEFAULT_MAX_ROUNDS
+
+**Type:** Integer  
+**Required:** No  
+**Default:** `10`
+
+Default maximum number of rounds for OASIS simulations.
+
+```bash
+OASIS_DEFAULT_MAX_ROUNDS=10
+```
+
+<Note>
+  Start with simulations under 40 rounds to manage LLM API costs, especially when first testing the system.
+</Note>
+
+## Report Agent Configuration
+
+### REPORT_AGENT_MAX_TOOL_CALLS
+
+**Type:** Integer  
+**Required:** No  
+**Default:** `5`
+
+Maximum number of tool calls the report agent can make.
+
+```bash
+REPORT_AGENT_MAX_TOOL_CALLS=5
+```
+
+### REPORT_AGENT_MAX_REFLECTION_ROUNDS
+
+**Type:** Integer  
+**Required:** No  
+**Default:** `2`
+
+Maximum number of reflection rounds for the report agent.
+
+```bash
+REPORT_AGENT_MAX_REFLECTION_ROUNDS=2
+```
+
+### REPORT_AGENT_TEMPERATURE
+
+**Type:** Float  
+**Required:** No  
+**Default:** `0.5`
+
+Temperature setting for report agent LLM calls (0.0-1.0).
+
+```bash
+REPORT_AGENT_TEMPERATURE=0.5
+```
+
+## Setting Environment Variables
+
+### For Docker Deployment
+
+When using Docker Compose, environment variables are automatically loaded from the `.env` file:
+
+1. Create your `.env` file in the project root:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` with your configuration:
+   ```bash
+   nano .env
+   ```
+
+3. Start the container:
+   ```bash
+   docker-compose up -d
+   ```
+
+The `docker-compose.yml` file includes `env_file: - .env` which automatically loads your configuration.
+
+<Note>
+  No need to manually pass environment variables to Docker - the compose file handles this automatically.
+</Note>
+
+### For Source Deployment
+
+When running from source:
+
+1. Create your `.env` file in the project root:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit the file with your configuration:
+   ```bash
+   nano .env
+   ```
+
+3. The configuration is automatically loaded when you start the application:
+   ```bash
+   npm run dev
+   ```
+
+The backend's `config.py` automatically searches for `.env` in the project root and loads it using `python-dotenv`.
+
+### Production Environment
+
+For production deployments, you can also set environment variables directly in your hosting environment instead of using a `.env` file. The configuration system will use system environment variables if the `.env` file is not found.
+
+## Validation
+
+MiroFish validates critical configuration on startup. If required variables are missing, you'll see error messages indicating which configuration values need to be set.
+
+To manually check your configuration:
+
+```python
+from backend.app.config import Config
+errors = Config.validate()
+if errors:
+    print("Configuration errors:", errors)
+```
+
+## Example Configuration
+
+Here's a complete example `.env` file:
+
+```bash
+# LLM Configuration (OpenAI-compatible API)
+# Recommended: Alibaba Qwen-plus model
+# Note: Can be expensive, start with <40 round simulations
+LLM_API_KEY=sk-abc123def456
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL_NAME=qwen-plus
+
+# Zep Memory Graph Configuration
+# Free tier available at: https://app.getzep.com/
+ZEP_API_KEY=z_abc123def456
+
+# Optional: Boost LLM for parallel simulations
+# Only include if you want to use this feature
+# LLM_BOOST_API_KEY=sk-xyz789
+# LLM_BOOST_BASE_URL=https://api.openai.com/v1
+# LLM_BOOST_MODEL_NAME=gpt-4o-mini
+```
+
+## Next Steps
+
+- [LLM Setup Guide](/configuration/llm-setup) - Detailed LLM provider configuration
+- [Zep Cloud Setup](/configuration/zep-cloud) - Setting up Zep memory service
+- [Docker Deployment](/deployment/docker) - Deploy with Docker
+- [Source Deployment](/deployment/source-code) - Run from source code

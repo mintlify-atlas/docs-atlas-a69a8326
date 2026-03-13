@@ -1,0 +1,521 @@
+---
+title: 'Source Code Deployment'
+description: 'Install and run MiroFish from source code'
+icon: 'code'
+---
+
+Deploy MiroFish from source code for development or customization. This method gives you full control over the codebase and is recommended for contributors and advanced users.
+
+## Prerequisites
+
+Ensure you have the following tools installed before proceeding:
+
+| Tool | Version Required | Description | Installation Check |
+|------|-----------------|-------------|-------------------|
+| **Node.js** | 18.0.0 or higher | Frontend runtime environment with npm | `node -v` |
+| **Python** | 3.11 - 3.12 | Backend runtime environment | `python --version` |
+| **uv** | Latest | Fast Python package manager | `uv --version` |
+
+### Installing Prerequisites
+
+<Tabs>
+  <Tab title="macOS">
+    **Install Node.js:**
+    ```bash
+    # Using Homebrew
+    brew install node@18
+    ```
+
+    **Install Python:**
+    ```bash
+    # Using Homebrew
+    brew install python@3.12
+    ```
+
+    **Install uv:**
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+  </Tab>
+
+  <Tab title="Linux">
+    **Install Node.js:**
+    ```bash
+    # Using NodeSource repository
+    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    ```
+
+    **Install Python:**
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y python3.12 python3.12-venv
+    ```
+
+    **Install uv:**
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+  </Tab>
+
+  <Tab title="Windows">
+    **Install Node.js:**
+    - Download from [nodejs.org](https://nodejs.org/)
+    - Run the installer and follow the prompts
+
+    **Install Python:**
+    - Download Python 3.12 from [python.org](https://www.python.org/downloads/)
+    - Run the installer and check "Add Python to PATH"
+
+    **Install uv:**
+    ```powershell
+    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
+  </Tab>
+</Tabs>
+
+**Verify installations:**
+
+```bash
+node -v    # Should show v18.x.x or higher
+python --version  # Should show 3.11.x or 3.12.x
+uv --version      # Should show latest version
+```
+
+## Installation
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the MiroFish repository from GitHub:
+
+    ```bash
+    git clone https://github.com/666ghj/MiroFish.git
+    cd MiroFish
+    ```
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Copy the example environment file and configure your API keys:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Edit the `.env` file with your preferred text editor:
+
+    <CodeGroup>
+      ```bash macOS/Linux
+      nano .env
+      # or
+      vim .env
+      ```
+
+      ```powershell Windows
+      notepad .env
+      ```
+    </CodeGroup>
+
+    **Required Configuration:**
+
+    ```env
+    # LLM API Configuration (supports any OpenAI SDK compatible API)
+    # Recommended: Alibaba Bailian qwen-plus model
+    # Sign up at: https://bailian.console.aliyun.com/
+    LLM_API_KEY=your_api_key_here
+    LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+    LLM_MODEL_NAME=qwen-plus
+
+    # Zep Cloud Configuration for memory and graph storage
+    # Free tier available at: https://app.getzep.com/
+    ZEP_API_KEY=your_zep_api_key_here
+    ```
+
+    **Optional Boost Configuration:**
+
+    ```env
+    # Acceleration LLM Configuration (optional)
+    # Only include if you want to use a different model for acceleration
+    LLM_BOOST_API_KEY=your_api_key_here
+    LLM_BOOST_BASE_URL=your_base_url_here
+    LLM_BOOST_MODEL_NAME=your_model_name_here
+    ```
+
+    <Info>
+      **Cost Notice**: The qwen-plus model can consume significant tokens. For initial testing, try simulations with fewer than 40 rounds.
+    </Info>
+
+    <Warning>
+      Never commit your `.env` file to version control. It contains sensitive API keys.
+    </Warning>
+  </Step>
+
+  <Step title="Install All Dependencies">
+    Use the convenience script to install all dependencies at once:
+
+    ```bash
+    npm run setup:all
+    ```
+
+    This single command will:
+    - Install root package dependencies
+    - Install frontend dependencies (React, Next.js, etc.)
+    - Install backend dependencies via uv (FastAPI, LangChain, etc.)
+    - Create a Python virtual environment in `backend/.venv`
+
+    **Alternative: Install Dependencies Separately**
+
+    If you prefer to install dependencies step by step:
+
+    <CodeGroup>
+      ```bash Node.js Dependencies
+      # Install root and frontend dependencies
+      npm run setup
+      ```
+
+      ```bash Python Dependencies
+      # Install backend dependencies
+      npm run setup:backend
+      ```
+    </CodeGroup>
+
+    <Tip>
+      The `uv` package manager is significantly faster than pip and automatically manages virtual environments.
+    </Tip>
+  </Step>
+
+  <Step title="Start the Application">
+    Start both frontend and backend services concurrently:
+
+    ```bash
+    npm run dev
+    ```
+
+    This command uses `concurrently` to run:
+    - **Backend**: FastAPI server on http://localhost:5001
+    - **Frontend**: Next.js development server on http://localhost:3000
+
+    You should see output similar to:
+
+    ```
+    [backend] INFO:     Uvicorn running on http://0.0.0.0:5001
+    [frontend] ▲ Next.js 14.x.x
+    [frontend] - Local:        http://localhost:3000
+    ```
+  </Step>
+
+  <Step title="Verify Installation">
+    Open your browser and navigate to:
+
+    - **Frontend**: http://localhost:3000
+    - **Backend API docs**: http://localhost:5001/docs
+
+    You should see the MiroFish interface load successfully.
+  </Step>
+</Steps>
+
+## Development Workflow
+
+### Running Services Separately
+
+For development, you may want to run frontend and backend in separate terminal windows:
+
+<Tabs>
+  <Tab title="Backend Only">
+    Start only the backend API server:
+
+    ```bash
+    npm run backend
+    ```
+
+    Or directly with uv:
+
+    ```bash
+    cd backend
+    uv run python run.py
+    ```
+
+    The backend will be available at http://localhost:5001
+  </Tab>
+
+  <Tab title="Frontend Only">
+    Start only the frontend development server:
+
+    ```bash
+    npm run frontend
+    ```
+
+    Or directly with npm:
+
+    ```bash
+    cd frontend
+    npm run dev
+    ```
+
+    The frontend will be available at http://localhost:3000
+  </Tab>
+
+  <Tab title="Both Services">
+    Start both services in one terminal:
+
+    ```bash
+    npm run dev
+    ```
+
+    This is equivalent to running both commands above simultaneously.
+  </Tab>
+</Tabs>
+
+### Project Structure
+
+```
+MiroFish/
+├── frontend/           # Next.js frontend application
+│   ├── src/
+│   ├── package.json
+│   └── ...
+├── backend/            # FastAPI backend application
+│   ├── src/
+│   ├── uploads/        # Uploaded seed materials
+│   ├── pyproject.toml  # Python dependencies
+│   ├── uv.lock        # Locked dependencies
+│   └── run.py         # Entry point
+├── package.json       # Root package with convenience scripts
+├── .env               # Environment variables (create from .env.example)
+└── README.md
+```
+
+### Hot Reloading
+
+Both frontend and backend support hot reloading during development:
+
+- **Frontend**: Next.js automatically reloads when you edit files in `frontend/src/`
+- **Backend**: Uvicorn watches for changes in Python files and restarts automatically
+
+### Building for Production
+
+Build the frontend for production deployment:
+
+```bash
+npm run build
+```
+
+This creates an optimized production build in `frontend/.next/`
+
+### Running Tests
+
+If tests are available (check individual package.json files):
+
+<CodeGroup>
+  ```bash Frontend Tests
+  cd frontend
+  npm test
+  ```
+
+  ```bash Backend Tests
+  cd backend
+  uv run pytest
+  ```
+</CodeGroup>
+
+## Managing Dependencies
+
+### Adding Frontend Dependencies
+
+```bash
+cd frontend
+npm install <package-name>
+```
+
+### Adding Backend Dependencies
+
+```bash
+cd backend
+uv add <package-name>
+```
+
+The `uv add` command automatically updates `pyproject.toml` and `uv.lock`
+
+### Updating Dependencies
+
+<CodeGroup>
+  ```bash Update Frontend
+  cd frontend
+  npm update
+  ```
+
+  ```bash Update Backend
+  cd backend
+  uv sync --upgrade
+  ```
+</CodeGroup>
+
+## Troubleshooting
+
+### Installation Issues
+
+**Error: "node: command not found"**
+
+- Node.js is not installed or not in PATH
+- Solution: Install Node.js 18+ and restart your terminal
+
+**Error: "python: command not found"**
+
+- Python is not installed or not in PATH
+- Solution: Install Python 3.11-3.12 and restart your terminal
+- On some systems, use `python3` instead of `python`
+
+**Error: "uv: command not found"**
+
+- uv is not installed or not in PATH
+- Solution: Install uv using the installation script and restart your terminal
+- May need to run: `source $HOME/.cargo/env`
+
+### Dependency Installation Failures
+
+**npm install fails:**
+
+```bash
+# Clear npm cache and retry
+npm cache clean --force
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**uv sync fails:**
+
+```bash
+# Remove virtual environment and retry
+cd backend
+rm -rf .venv
+uv sync
+```
+
+### Runtime Errors
+
+**Backend fails to start:**
+
+**Check Python version:**
+```bash
+python --version  # Must be 3.11.x or 3.12.x
+```
+
+**Verify environment variables:**
+```bash
+cat .env  # Check that all required variables are set
+```
+
+**Check backend logs for specific errors:**
+- Missing dependencies: Run `npm run setup:backend`
+- Invalid API keys: Verify keys in `.env` file
+- Port 5001 in use: Change port in backend configuration
+
+**Frontend fails to start:**
+
+**Check Node.js version:**
+```bash
+node -v  # Must be 18.x.x or higher
+```
+
+**Clear Next.js cache:**
+```bash
+cd frontend
+rm -rf .next
+npm run dev
+```
+
+**Port 3000 in use:**
+```bash
+# On Linux/macOS
+lsof -ti:3000 | xargs kill -9
+
+# On Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+```
+
+### API Connection Issues
+
+**Frontend can't connect to backend:**
+
+1. Verify backend is running: http://localhost:5001/docs
+2. Check for CORS errors in browser console
+3. Ensure both services are running
+4. Verify `.env` configuration is correct
+
+**LLM API errors:**
+
+**Error: "Invalid API key"**
+- Verify `LLM_API_KEY` in `.env` file
+- Check API key status at [Alibaba Bailian Console](https://bailian.console.aliyun.com/)
+
+**Error: "Connection timeout"**
+- Check `LLM_BASE_URL` is correct
+- Verify network connectivity
+- Try using the optional boost configuration
+
+**Zep Cloud errors:**
+
+**Error: "Unauthorized"**
+- Verify `ZEP_API_KEY` in `.env` file
+- Check API key status at [Zep Cloud](https://app.getzep.com/)
+
+**Error: "Quota exceeded"**
+- Check your usage limits in the Zep dashboard
+- Consider upgrading your plan for larger simulations
+
+### Performance Issues
+
+**Slow simulation performance:**
+
+- Reduce the number of simulation rounds (try < 40 for testing)
+- Configure the optional `LLM_BOOST` settings for faster model
+- Monitor API rate limits and quotas
+- Check system resources (CPU, memory, network)
+
+**High memory usage:**
+
+- Large simulations require significant memory
+- Close other applications to free up RAM
+- Consider using Docker deployment with resource limits
+
+### File Upload Issues
+
+**Error uploading seed materials:**
+
+**Check uploads directory exists:**
+```bash
+mkdir -p backend/uploads
+chmod 755 backend/uploads
+```
+
+**Check file size limits:**
+- Default limit may be set in backend configuration
+- Large files may timeout during upload
+
+### Getting Help
+
+If you continue to experience issues:
+
+1. Check the [GitHub Issues](https://github.com/666ghj/MiroFish/issues) for similar problems
+2. Join the community:
+   - Discord: [MiroFish Discord](https://discord.com/channels/1469200078932545606/1469201282077163739)
+   - QQ Group: See README for QR code
+3. Review backend logs for detailed error messages
+4. Enable debug mode if available in configuration
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Docker Deployment" icon="docker" href="/deployment/docker">
+    Learn about containerized deployment
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/environment-variables">
+    Explore advanced configuration options
+  </Card>
+  <Card title="Getting Started" icon="rocket" href="/quickstart">
+    Run your first simulation
+  </Card>
+  <Card title="Contributing" icon="code-branch" href="https://github.com/666ghj/MiroFish/blob/main/CONTRIBUTING.md">
+    Contribute to MiroFish development
+  </Card>
+</CardGroup>

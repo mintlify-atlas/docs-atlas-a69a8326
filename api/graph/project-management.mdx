@@ -1,0 +1,377 @@
+---
+title: 'Project Management'
+description: 'Manage projects, including viewing details, listing, deleting, and resetting'
+---
+
+## Overview
+
+Projects are the core organizational unit in MiroFish. Each project contains uploaded documents, generated ontology, and optionally a built knowledge graph. These endpoints allow you to manage the lifecycle of your projects.
+
+## Get Project Details
+
+<api>GET /api/graph/project/{project_id}</api>
+
+Retrieve detailed information about a specific project.
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  The unique project identifier (format: `proj_xxxx`).
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Request success status.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Project details.
+  
+  <ResponseField name="project_id" type="string">
+    Unique project identifier.
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Project name.
+  </ResponseField>
+  
+  <ResponseField name="status" type="string">
+    Current project status: `created`, `ontology_generated`, `graph_building`, `graph_completed`, or `failed`.
+  </ResponseField>
+  
+  <ResponseField name="simulation_requirement" type="string">
+    The simulation requirement description provided during project creation.
+  </ResponseField>
+  
+  <ResponseField name="ontology" type="object">
+    Generated ontology (null if not yet generated).
+    
+    <ResponseField name="entity_types" type="array">
+      Entity type definitions.
+    </ResponseField>
+    
+    <ResponseField name="edge_types" type="array">
+      Relationship type definitions.
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="analysis_summary" type="string">
+    AI-generated analysis summary.
+  </ResponseField>
+  
+  <ResponseField name="files" type="array">
+    List of uploaded files.
+  </ResponseField>
+  
+  <ResponseField name="graph_id" type="string">
+    Zep graph ID (null if graph not built).
+  </ResponseField>
+  
+  <ResponseField name="graph_build_task_id" type="string">
+    Task ID for graph building (null if not started).
+  </ResponseField>
+  
+  <ResponseField name="chunk_size" type="number">
+    Text chunk size used for graph building.
+  </ResponseField>
+  
+  <ResponseField name="chunk_overlap" type="number">
+    Chunk overlap used for graph building.
+  </ResponseField>
+  
+  <ResponseField name="total_text_length" type="number">
+    Total character count of extracted text.
+  </ResponseField>
+  
+  <ResponseField name="error" type="string">
+    Error message if project failed.
+  </ResponseField>
+  
+  <ResponseField name="created_at" type="string">
+    Project creation timestamp.
+  </ResponseField>
+  
+  <ResponseField name="updated_at" type="string">
+    Last update timestamp.
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+curl https://api.mirofish.com/api/graph/project/proj_abc123xyz
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "project_id": "proj_abc123xyz",
+    "name": "Research Network Analysis",
+    "status": "graph_completed",
+    "simulation_requirement": "Analyze research collaboration networks",
+    "ontology": {
+      "entity_types": [
+        {"name": "Researcher", "description": "Academic researcher"}
+      ],
+      "edge_types": [
+        {"name": "COLLABORATED_WITH", "description": "Researchers who collaborated"}
+      ]
+    },
+    "analysis_summary": "Ontology captures research collaboration patterns.",
+    "files": [
+      {"filename": "paper.pdf", "size": 524288}
+    ],
+    "graph_id": "graph_789ghi",
+    "graph_build_task_id": "task_def456uvw",
+    "chunk_size": 500,
+    "chunk_overlap": 50,
+    "total_text_length": 45230,
+    "error": null,
+    "created_at": "2026-03-13T10:30:00Z",
+    "updated_at": "2026-03-13T11:15:00Z"
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "success": false,
+  "error": "项目不存在: proj_invalid"
+}
+```
+
+---
+
+## List All Projects
+
+<api>GET /api/graph/project/list</api>
+
+Retrieve a list of all projects.
+
+### Query Parameters
+
+<ParamField query="limit" type="number" default="50">
+  Maximum number of projects to return.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Request success status.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of project objects (same structure as single project response).
+</ResponseField>
+
+<ResponseField name="count" type="number">
+  Number of projects returned.
+</ResponseField>
+
+### Example Request
+
+```bash
+curl https://api.mirofish.com/api/graph/project/list?limit=10
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "project_id": "proj_abc123xyz",
+      "name": "Research Network Analysis",
+      "status": "graph_completed",
+      "created_at": "2026-03-13T10:30:00Z"
+    },
+    {
+      "project_id": "proj_def456uvw",
+      "name": "Customer Behavior Study",
+      "status": "ontology_generated",
+      "created_at": "2026-03-12T14:20:00Z"
+    }
+  ],
+  "count": 2
+}
+```
+
+---
+
+## Delete Project
+
+<api>DELETE /api/graph/project/{project_id}</api>
+
+Permanently delete a project and all associated data (files, ontology, graph references).
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  The unique project identifier to delete.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Deletion success status.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X DELETE https://api.mirofish.com/api/graph/project/proj_abc123xyz
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "项目已删除: proj_abc123xyz"
+}
+```
+
+### Error Response
+
+```json
+{
+  "success": false,
+  "error": "项目不存在或删除失败: proj_invalid"
+}
+```
+
+---
+
+## Reset Project
+
+<api>POST /api/graph/project/{project_id}/reset</api>
+
+Reset a project to allow rebuilding the knowledge graph. This clears the graph build state but preserves the uploaded files and generated ontology.
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  The unique project identifier to reset.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Reset success status.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated project details (same structure as get project response).
+</ResponseField>
+
+### What Gets Reset?
+
+- **Project status**: Reverts to `ontology_generated` (or `created` if no ontology exists)
+- **Graph ID**: Cleared (set to null)
+- **Build task ID**: Cleared (set to null)
+- **Error messages**: Cleared
+
+### What's Preserved?
+
+- Uploaded files
+- Generated ontology
+- Document text
+- Chunk size/overlap settings
+- Project name and metadata
+
+### Example Request
+
+```bash
+curl -X POST https://api.mirofish.com/api/graph/project/proj_abc123xyz/reset
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "项目已重置: proj_abc123xyz",
+  "data": {
+    "project_id": "proj_abc123xyz",
+    "name": "Research Network Analysis",
+    "status": "ontology_generated",
+    "graph_id": null,
+    "graph_build_task_id": null,
+    "error": null
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "success": false,
+  "error": "项目不存在: proj_invalid"
+}
+```
+
+---
+
+## Project Status Flow
+
+Projects progress through these states:
+
+1. **`created`** - Project initialized, files uploaded but ontology not generated
+2. **`ontology_generated`** - Ontology successfully generated, ready for graph building
+3. **`graph_building`** - Graph construction in progress
+4. **`graph_completed`** - Graph successfully built
+5. **`failed`** - Error occurred during processing
+
+### State Transitions
+
+```
+created
+  ↓ (POST /ontology/generate)
+ontology_generated
+  ↓ (POST /build)
+graph_building
+  ↓ (async completion)
+graph_completed
+  ↓ (POST /project/{id}/reset)
+ontology_generated  ← (back to ready for rebuild)
+```
+
+## Common Workflows
+
+### Rebuild a Failed Graph
+
+```bash
+# 1. Reset the project
+curl -X POST https://api.mirofish.com/api/graph/project/proj_abc123xyz/reset
+
+# 2. Start a new build with different parameters
+curl -X POST https://api.mirofish.com/api/graph/build \
+  -H "Content-Type: application/json" \
+  -d '{"project_id": "proj_abc123xyz", "chunk_size": 600}'
+```
+
+### Clean Up Old Projects
+
+```bash
+# 1. List all projects
+curl https://api.mirofish.com/api/graph/project/list
+
+# 2. Delete unwanted projects
+curl -X DELETE https://api.mirofish.com/api/graph/project/proj_old123
+```

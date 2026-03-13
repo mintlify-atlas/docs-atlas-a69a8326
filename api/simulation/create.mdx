@@ -1,0 +1,131 @@
+---
+title: "Create Simulation"
+description: "Create a new simulation instance for swarm intelligence prediction"
+---
+
+## Endpoint
+
+```
+POST /api/simulation/create
+```
+
+Creates a new simulation with specified platform configurations. The simulation requires an existing project with a built knowledge graph.
+
+## Request Body
+
+<ParamField path="project_id" type="string" required>
+  The ID of the project to create simulation for (format: `proj_xxxx`)
+</ParamField>
+
+<ParamField path="graph_id" type="string">
+  Knowledge graph ID (format: `mirofish_xxxx`). If not provided, uses the graph_id from the project. If the project doesn't have a graph, you must call `/api/graph/build` first.
+</ParamField>
+
+<ParamField path="enable_twitter" type="boolean" default="true">
+  Enable Twitter platform simulation
+</ParamField>
+
+<ParamField path="enable_reddit" type="boolean" default="true">
+  Enable Reddit platform simulation
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="simulation_id" type="string">
+    Unique simulation identifier (format: `sim_xxxx`)
+  </ResponseField>
+
+  <ResponseField name="project_id" type="string">
+    Associated project ID
+  </ResponseField>
+
+  <ResponseField name="graph_id" type="string">
+    Knowledge graph ID used for this simulation
+  </ResponseField>
+
+  <ResponseField name="status" type="string">
+    Simulation status: `created`
+  </ResponseField>
+
+  <ResponseField name="enable_twitter" type="boolean">
+    Whether Twitter platform is enabled
+  </ResponseField>
+
+  <ResponseField name="enable_reddit" type="boolean">
+    Whether Reddit platform is enabled
+  </ResponseField>
+
+  <ResponseField name="created_at" type="string">
+    ISO 8601 timestamp of creation
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```json
+{
+  "project_id": "proj_abc123",
+  "graph_id": "mirofish_xyz789",
+  "enable_twitter": true,
+  "enable_reddit": true
+}
+```
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_def456",
+    "project_id": "proj_abc123",
+    "graph_id": "mirofish_xyz789",
+    "status": "created",
+    "enable_twitter": true,
+    "enable_reddit": true,
+    "created_at": "2026-03-13T10:00:00Z"
+  }
+}
+```
+
+## Error Responses
+
+### Missing project_id
+
+```json
+{
+  "success": false,
+  "error": "请提供 project_id"
+}
+```
+
+### Project not found
+
+```json
+{
+  "success": false,
+  "error": "项目不存在: proj_abc123"
+}
+```
+
+### Graph not built
+
+```json
+{
+  "success": false,
+  "error": "项目尚未构建图谱，请先调用 /api/graph/build"
+}
+```
+
+## Next Steps
+
+After creating a simulation:
+
+1. Call [/api/simulation/prepare](/api/simulation/prepare) to prepare the simulation environment
+2. Monitor preparation progress with [/api/simulation/prepare/status](/api/simulation/prepare#check-status)
+3. Once ready, start the simulation with [/api/simulation/start](/api/simulation/run#start-simulation)

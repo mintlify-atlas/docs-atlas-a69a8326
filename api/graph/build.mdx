@@ -1,0 +1,337 @@
+---
+title: 'Build Graph'
+api: 'POST /api/graph/build'
+description: 'Build a knowledge graph from project documents using the generated ontology'
+---
+
+## Overview
+
+This endpoint builds a knowledge graph by processing the documents from a project (created via `/api/graph/ontology/generate`) using the generated ontology schema. The graph construction is an asynchronous process that:
+
+1. Splits documents into chunks
+2. Creates a Zep graph with the ontology
+3. Processes chunks to extract entities and relationships
+4. Waits for Zep to complete graph construction
+
+You'll receive a `task_id` to monitor progress.
+
+## Authentication
+
+No authentication required.
+
+## Request
+
+<ParamField body="project_id" type="string" required>
+  The project ID returned from `/api/graph/ontology/generate` (format: `proj_xxxx`).
+</ParamField>
+
+<ParamField body="graph_name" type="string">
+  Human-readable name for the graph. Defaults to the project name if not provided.
+</ParamField>
+
+<ParamField body="chunk_size" type="number" default="500">
+  Number of characters per text chunk. Larger chunks provide more context but may reduce precision.
+</ParamField>
+
+<ParamField body="chunk_overlap" type="number" default="50">
+  Number of characters to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
+</ParamField>
+
+<ParamField body="force" type="boolean" default="false">
+  Force rebuild even if a graph is already building or completed. Use with caution as this resets the project state.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the build task was successfully started.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Task information.
+  
+  <ResponseField name="project_id" type="string">
+    The project ID.
+  </ResponseField>
+  
+  <ResponseField name="task_id" type="string">
+    Unique task identifier (format: `task_xxxx`). Use this to query build progress via `/api/graph/task/{task_id}`.
+  </ResponseField>
+  
+  <ResponseField name="message" type="string">
+    Confirmation message with instructions.
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.mirofish.com/api/graph/build \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": "proj_abc123xyz",
+    "graph_name": "Research Collaboration Network",
+    "chunk_size": 600,
+    "chunk_overlap": 100
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "project_id": "proj_abc123xyz",
+    "task_id": "task_def456uvw",
+    "message": "图谱构建任务已启动，请通过 /task/{task_id} 查询进度"
+  }
+}
+```
+
+## Monitoring Build Progress
+
+Use the returned `task_id` to check build progress:
+
+### GET /api/graph/task/{task_id}
+
+Query the status of the build task.
+
+#### Request
+
+```bash
+curl https://api.mirofish.com/api/graph/task/task_def456uvw
+```
+
+#### Response
+
+<ResponseField name="success" type="boolean">
+  Request success status.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Task details.
+  
+  <ResponseField name="task_id" type="string">
+    The task ID.
+  </ResponseField>
+  
+  <ResponseField name="status" type="string">
+    Current task status: `pending`, `processing`, `completed`, or `failed`.
+  </ResponseField>
+  
+  <ResponseField name="message" type="string">
+    Current status message (e.g., "文本分块中...", "等待Zep处理数据...").
+  </ResponseField>
+  
+  <ResponseField name="progress" type="number">
+    Progress percentage (0-100).
+  </ResponseField>
+  
+  <ResponseField name="result" type="object">
+    Available when `status` is `completed`.
+    
+    <ResponseField name="project_id" type="string">
+      The project ID.
+    </ResponseField>
+    
+    <ResponseField name="graph_id" type="string">
+      The Zep graph ID. Use this to retrieve graph data.
+    </ResponseField>
+    
+    <ResponseField name="node_count" type="number">
+      Number of nodes (entities) in the graph.
+    </ResponseField>
+    
+    <ResponseField name="edge_count" type="number">
+      Number of edges (relationships) in the graph.
+    </ResponseField>
+    
+    <ResponseField name="chunk_count" type="number">
+      Number of text chunks processed.
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="error" type="string">
+    Error details if `status` is `failed`.
+  </ResponseField>
+</ResponseField>
+
+#### Example Response (In Progress)
+
+```json
+{
+  "success": true,
+  "data": {
+    "task_id": "task_def456uvw",
+    "status": "processing",
+    "message": "等待Zep处理数据...",
+    "progress": 65
+  }
+}
+```
+
+#### Example Response (Completed)
+
+```json
+{
+  "success": true,
+  "data": {
+    "task_id": "task_def456uvw",
+    "status": "completed",
+    "message": "图谱构建完成",
+    "progress": 100,
+    "result": {
+      "project_id": "proj_abc123xyz",
+      "graph_id": "graph_789ghi",
+      "node_count": 342,
+      "edge_count": 587,
+      "chunk_count": 156
+    }
+  }
+}
+```
+
+## Retrieving Graph Data
+
+Once the build is complete, retrieve the graph data:
+
+### GET /api/graph/data/{graph_id}
+
+Fetch nodes and edges from the completed graph.
+
+#### Request
+
+```bash
+curl https://api.mirofish.com/api/graph/data/graph_789ghi
+```
+
+#### Response
+
+<ResponseField name="success" type="boolean">
+  Request success status.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Graph data.
+  
+  <ResponseField name="graph_id" type="string">
+    The graph ID.
+  </ResponseField>
+  
+  <ResponseField name="node_count" type="number">
+    Total number of nodes.
+  </ResponseField>
+  
+  <ResponseField name="edge_count" type="number">
+    Total number of edges.
+  </ResponseField>
+  
+  <ResponseField name="nodes" type="array">
+    Array of node objects with properties like `uuid`, `name`, `type`, etc.
+  </ResponseField>
+  
+  <ResponseField name="edges" type="array">
+    Array of edge objects with `source`, `target`, `type`, etc.
+  </ResponseField>
+</ResponseField>
+
+#### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "graph_id": "graph_789ghi",
+    "node_count": 342,
+    "edge_count": 587,
+    "nodes": [
+      {
+        "uuid": "node_001",
+        "name": "Dr. Jane Smith",
+        "type": "Researcher"
+      }
+    ],
+    "edges": [
+      {
+        "source": "node_001",
+        "target": "node_042",
+        "type": "AUTHORED"
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+### 400 Bad Request
+
+```json
+{
+  "success": false,
+  "error": "请提供 project_id"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "项目尚未生成本体，请先调用 /ontology/generate"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "图谱正在构建中，请勿重复提交。如需强制重建，请添加 force: true",
+  "task_id": "task_existing123"
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "success": false,
+  "error": "项目不存在: proj_invalid"
+}
+```
+
+### 500 Internal Server Error
+
+```json
+{
+  "success": false,
+  "error": "配置错误: ZEP_API_KEY未配置"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Error message details",
+  "traceback": "Full error traceback for debugging"
+}
+```
+
+## Complete Workflow Example
+
+```bash
+# Step 1: Start graph build
+curl -X POST https://api.mirofish.com/api/graph/build \
+  -H "Content-Type: application/json" \
+  -d '{"project_id": "proj_abc123xyz"}'
+
+# Response: {"success": true, "data": {"task_id": "task_def456uvw", ...}}
+
+# Step 2: Poll for progress (repeat until completed)
+curl https://api.mirofish.com/api/graph/task/task_def456uvw
+
+# Response: {"success": true, "data": {"status": "completed", "result": {"graph_id": "graph_789ghi", ...}}}
+
+# Step 3: Retrieve graph data
+curl https://api.mirofish.com/api/graph/data/graph_789ghi
+
+# Response: {"success": true, "data": {"nodes": [...], "edges": [...]}}
+```

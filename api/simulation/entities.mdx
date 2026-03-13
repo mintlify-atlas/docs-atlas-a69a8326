@@ -1,0 +1,393 @@
+---
+title: "Simulation Entities"
+description: "Query and retrieve entities from knowledge graphs for simulation"
+---
+
+## Get Graph Entities
+
+### Endpoint
+
+```
+GET /api/simulation/entities/{graph_id}
+```
+
+Retrieves filtered entities from a knowledge graph. Only returns entities matching predefined entity types (entities with Labels other than just "Entity").
+
+### Path Parameters
+
+<ParamField path="graph_id" type="string" required>
+  The knowledge graph ID to query (format: `mirofish_xxxx`)
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="entity_types" type="string">
+  Comma-separated list of entity types to filter (e.g., `Student,Professor,PublicFigure`). If not specified, returns all defined entity types.
+</ParamField>
+
+<ParamField query="enrich" type="boolean" default="true">
+  Whether to include related edges (relationships) for each entity
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="filtered_count" type="number">
+    Number of entities matching the filter
+  </ResponseField>
+
+  <ResponseField name="total_count" type="number">
+    Total entities in the graph before filtering
+  </ResponseField>
+
+  <ResponseField name="entity_types" type="array">
+    List of unique entity types found
+  </ResponseField>
+
+  <ResponseField name="entities" type="array">
+    Array of entity objects with details
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+GET /api/simulation/entities/mirofish_xyz789?entity_types=Student,Professor&enrich=true
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "filtered_count": 68,
+    "total_count": 150,
+    "entity_types": ["Student", "Professor"],
+    "entities": [
+      {
+        "uuid": "entity_uuid_1",
+        "name": "张三",
+        "labels": ["Person", "Student"],
+        "properties": {
+          "age": 20,
+          "major": "Computer Science",
+          "year": "Junior"
+        },
+        "edges": [
+          {
+            "type": "STUDIES_AT",
+            "target": "entity_uuid_university",
+            "properties": {
+              "since": "2023"
+            }
+          },
+          {
+            "type": "FOLLOWS",
+            "target": "entity_uuid_2",
+            "properties": {}
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Get Entity Detail
+
+### Endpoint
+
+```
+GET /api/simulation/entities/{graph_id}/{entity_uuid}
+```
+
+Retrieve detailed information for a single entity including all relationships and context.
+
+### Path Parameters
+
+<ParamField path="graph_id" type="string" required>
+  The knowledge graph ID
+</ParamField>
+
+<ParamField path="entity_uuid" type="string" required>
+  The unique identifier of the entity to retrieve
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Complete entity object with:
+  <ResponseField name="uuid" type="string">
+    Entity unique identifier
+  </ResponseField>
+
+  <ResponseField name="name" type="string">
+    Entity name
+  </ResponseField>
+
+  <ResponseField name="labels" type="array">
+    Entity type labels
+  </ResponseField>
+
+  <ResponseField name="properties" type="object">
+    Custom properties and attributes
+  </ResponseField>
+
+  <ResponseField name="edges" type="array">
+    All relationships from this entity
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+GET /api/simulation/entities/mirofish_xyz789/entity_uuid_1
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "uuid": "entity_uuid_1",
+    "name": "张三",
+    "labels": ["Person", "Student"],
+    "properties": {
+      "age": 20,
+      "major": "Computer Science",
+      "year": "Junior",
+      "interests": ["AI", "Gaming", "Music"],
+      "personality": "Outgoing, curious, tech-savvy"
+    },
+    "edges": [
+      {
+        "type": "STUDIES_AT",
+        "target": "entity_uuid_university",
+        "target_name": "武汉大学",
+        "properties": {
+          "since": "2023",
+          "gpa": 3.8
+        }
+      },
+      {
+        "type": "FOLLOWS",
+        "target": "entity_uuid_2",
+        "target_name": "李教授",
+        "properties": {}
+      },
+      {
+        "type": "MEMBER_OF",
+        "target": "entity_uuid_group",
+        "target_name": "计算机协会",
+        "properties": {
+          "role": "member"
+        }
+      }
+    ]
+  }
+}
+```
+
+## Get Entities By Type
+
+### Endpoint
+
+```
+GET /api/simulation/entities/{graph_id}/by-type/{entity_type}
+```
+
+Retrieve all entities of a specific type from the knowledge graph.
+
+### Path Parameters
+
+<ParamField path="graph_id" type="string" required>
+  The knowledge graph ID
+</ParamField>
+
+<ParamField path="entity_type" type="string" required>
+  The entity type to filter (e.g., `Student`, `Professor`, `PublicFigure`)
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="enrich" type="boolean" default="true">
+  Whether to include related edges for each entity
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="entity_type" type="string">
+    The requested entity type
+  </ResponseField>
+
+  <ResponseField name="count" type="number">
+    Number of entities found
+  </ResponseField>
+
+  <ResponseField name="entities" type="array">
+    Array of entity objects
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+GET /api/simulation/entities/mirofish_xyz789/by-type/Student?enrich=true
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "entity_type": "Student",
+    "count": 45,
+    "entities": [
+      {
+        "uuid": "entity_uuid_1",
+        "name": "张三",
+        "labels": ["Person", "Student"],
+        "properties": {
+          "age": 20,
+          "major": "Computer Science"
+        },
+        "edges": [
+          {
+            "type": "STUDIES_AT",
+            "target": "entity_uuid_university"
+          }
+        ]
+      },
+      {
+        "uuid": "entity_uuid_2",
+        "name": "李四",
+        "labels": ["Person", "Student"],
+        "properties": {
+          "age": 21,
+          "major": "Physics"
+        },
+        "edges": [
+          {
+            "type": "STUDIES_AT",
+            "target": "entity_uuid_university"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Entity Schema
+
+Entities in the Zep knowledge graph follow this structure:
+
+### Entity Object
+
+<ResponseField name="uuid" type="string">
+  Unique identifier for the entity
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Human-readable name
+</ResponseField>
+
+<ResponseField name="labels" type="array">
+  Type labels (e.g., `["Person", "Student"]`). Entities with only "Entity" label are filtered out.
+</ResponseField>
+
+<ResponseField name="properties" type="object">
+  Custom key-value properties extracted from documents
+</ResponseField>
+
+<ResponseField name="edges" type="array">
+  Relationships to other entities (only included when `enrich=true`)
+</ResponseField>
+
+### Edge Object
+
+<ResponseField name="type" type="string">
+  Relationship type (e.g., `STUDIES_AT`, `FOLLOWS`, `WORKS_FOR`)
+</ResponseField>
+
+<ResponseField name="target" type="string">
+  Target entity UUID
+</ResponseField>
+
+<ResponseField name="target_name" type="string">
+  Target entity name (if available)
+</ResponseField>
+
+<ResponseField name="properties" type="object">
+  Relationship-specific properties
+</ResponseField>
+
+## Common Entity Types
+
+MiroFish recognizes various entity types from documents:
+
+- **Person** - Individual people
+- **Student** - Students at educational institutions
+- **Professor** / **Teacher** - Academic staff
+- **PublicFigure** - Public personalities, influencers
+- **Organization** - Companies, institutions, groups
+- **Location** - Places and venues
+- **Event** - Incidents, activities, gatherings
+- **Topic** - Subjects, themes, discussions
+
+## Error Responses
+
+### ZEP_API_KEY not configured
+
+```json
+{
+  "success": false,
+  "error": "ZEP_API_KEY未配置"
+}
+```
+
+### Entity not found
+
+```json
+{
+  "success": false,
+  "error": "实体不存在: entity_uuid_1"
+}
+```
+
+## Use Cases
+
+### Select Entities for Simulation
+
+1. Get all entity types: `GET /entities/{graph_id}?enrich=false`
+2. Review available types and counts
+3. Filter specific types: `GET /entities/{graph_id}?entity_types=Student,Professor`
+4. Pass filtered types to [/api/simulation/prepare](/api/simulation/prepare)
+
+### Analyze Entity Relationships
+
+1. Get entity with relationships: `GET /entities/{graph_id}/{entity_uuid}`
+2. Examine edges to understand social network structure
+3. Use relationship data to inform agent behavior generation
+
+### Explore Entity Types
+
+1. Query by type: `GET /entities/{graph_id}/by-type/Student`
+2. Review all entities of that type
+3. Identify patterns in properties and relationships

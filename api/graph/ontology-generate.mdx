@@ -1,0 +1,202 @@
+---
+title: 'Generate Ontology'
+api: 'POST /api/graph/ontology/generate'
+description: 'Upload documents and generate ontology schema for knowledge graph construction'
+---
+
+## Overview
+
+This endpoint accepts document files (PDF, MD, TXT) and a simulation requirement description, then uses AI to analyze the content and generate an ontology schema. The ontology defines entity types and relationship types that will be used to build the knowledge graph.
+
+The endpoint creates a new project and returns a `project_id` that you'll use in subsequent API calls.
+
+## Authentication
+
+No authentication required.
+
+## Request
+
+<ParamField body="files" type="file[]" required>
+  One or more document files to analyze. Supported formats:
+  - PDF (`.pdf`)
+  - Markdown (`.md`)
+  - Text (`.txt`)
+  
+  All files are processed and their text content is extracted for ontology generation.
+</ParamField>
+
+<ParamField body="simulation_requirement" type="string" required>
+  Description of what you want to simulate or analyze. This guides the AI in generating relevant entity and relationship types.
+  
+  Example: "Track user behavior and interaction patterns in a social network"
+</ParamField>
+
+<ParamField body="project_name" type="string">
+  Human-readable name for the project. Defaults to "Unnamed Project" if not provided.
+</ParamField>
+
+<ParamField body="additional_context" type="string">
+  Optional additional context or instructions to help the AI generate more accurate ontology definitions.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Response payload containing project information and generated ontology.
+  
+  <ResponseField name="project_id" type="string">
+    Unique identifier for the created project (format: `proj_xxxx`). Use this ID in subsequent API calls.
+  </ResponseField>
+  
+  <ResponseField name="project_name" type="string">
+    The name of the created project.
+  </ResponseField>
+  
+  <ResponseField name="ontology" type="object">
+    Generated ontology schema.
+    
+    <ResponseField name="entity_types" type="array">
+      Array of entity type definitions extracted from the documents.
+    </ResponseField>
+    
+    <ResponseField name="edge_types" type="array">
+      Array of relationship type definitions extracted from the documents.
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="analysis_summary" type="string">
+    AI-generated summary of the document analysis and ontology generation rationale.
+  </ResponseField>
+  
+  <ResponseField name="files" type="array">
+    List of processed files.
+    
+    <ResponseField name="filename" type="string">
+      Original filename.
+    </ResponseField>
+    
+    <ResponseField name="size" type="number">
+      File size in bytes.
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="total_text_length" type="number">
+    Total character count of extracted text from all documents.
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.mirofish.com/api/graph/ontology/generate \
+  -F "files=@research_paper.pdf" \
+  -F "files=@notes.md" \
+  -F "simulation_requirement=Analyze research collaboration networks and identify key influencers" \
+  -F "project_name=Research Network Analysis" \
+  -F "additional_context=Focus on citation patterns and co-authorship relationships"
+```
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "project_id": "proj_abc123xyz",
+    "project_name": "Research Network Analysis",
+    "ontology": {
+      "entity_types": [
+        {
+          "name": "Researcher",
+          "description": "Academic researcher or author"
+        },
+        {
+          "name": "Paper",
+          "description": "Research paper or publication"
+        },
+        {
+          "name": "Institution",
+          "description": "Research institution or university"
+        }
+      ],
+      "edge_types": [
+        {
+          "name": "AUTHORED",
+          "description": "Researcher authored a paper"
+        },
+        {
+          "name": "CITED",
+          "description": "Paper cited another paper"
+        },
+        {
+          "name": "AFFILIATED_WITH",
+          "description": "Researcher affiliated with institution"
+        }
+      ]
+    },
+    "analysis_summary": "The documents describe a research collaboration network. The ontology captures researchers, their publications, institutional affiliations, and citation relationships.",
+    "files": [
+      {
+        "filename": "research_paper.pdf",
+        "size": 524288
+      },
+      {
+        "filename": "notes.md",
+        "size": 8192
+      }
+    ],
+    "total_text_length": 45230
+  }
+}
+```
+
+## Error Responses
+
+### 400 Bad Request
+
+Returned when required parameters are missing or invalid.
+
+```json
+{
+  "success": false,
+  "error": "请提供模拟需求描述 (simulation_requirement)"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "请至少上传一个文档文件"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "没有成功处理任何文档，请检查文件格式"
+}
+```
+
+### 500 Internal Server Error
+
+Returned when an unexpected error occurs during processing.
+
+```json
+{
+  "success": false,
+  "error": "Error message details",
+  "traceback": "Full error traceback for debugging"
+}
+```
+
+## Workflow
+
+After generating the ontology:
+
+1. Save the returned `project_id`
+2. Review the generated `ontology` to ensure it matches your needs
+3. Use the `project_id` to build the knowledge graph with [POST /api/graph/build](/api/graph/build)

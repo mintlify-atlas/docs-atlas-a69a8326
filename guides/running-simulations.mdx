@@ -1,0 +1,484 @@
+---
+title: Running Simulations
+description: Create, configure, and run swarm intelligence simulations with AI agents
+---
+
+## Overview
+
+MiroFish simulations use OASIS agents to simulate realistic social media interactions based on entities extracted from your knowledge graph. Each entity becomes an autonomous agent with its own personality, opinions, and behavior patterns.
+
+## The Simulation Workflow
+
+<Steps>
+  <Step title="Create a Simulation">
+    Initialize a new simulation for your project:
+    
+    ```bash POST /api/simulation/create
+    curl -X POST http://localhost:5000/api/simulation/create \
+      -H "Content-Type: application/json" \
+      -d '{
+        "project_id": "proj_xyz789",
+        "enable_twitter": true,
+        "enable_reddit": true
+      }'
+    ```
+    
+    **Parameters:**
+    - `project_id` (required): Your project ID with completed knowledge graph
+    - `graph_id` (optional): Specific graph ID (defaults to project's graph)
+    - `enable_twitter` (optional): Enable Twitter simulation (default: true)
+    - `enable_reddit` (optional): Enable Reddit simulation (default: true)
+    
+    **Response:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_abc123",
+        "project_id": "proj_xyz789",
+        "graph_id": "mirofish_graph456",
+        "status": "created",
+        "enable_twitter": true,
+        "enable_reddit": true,
+        "created_at": "2024-12-10T10:00:00"
+      }
+    }
+    ```
+    
+    Save the `simulation_id` - you'll need it for all subsequent steps!
+  </Step>
+
+  <Step title="Prepare the Simulation Environment">
+    This step generates AI agent profiles and simulation configurations:
+    
+    ```bash POST /api/simulation/prepare
+    curl -X POST http://localhost:5000/api/simulation/prepare \
+      -H "Content-Type: application/json" \
+      -d '{
+        "simulation_id": "sim_abc123",
+        "entity_types": ["Student", "Professor"],
+        "use_llm_for_profiles": true,
+        "parallel_profile_count": 5
+      }'
+    ```
+    
+    **Parameters:**
+    - `simulation_id` (required): Your simulation ID
+    - `entity_types` (optional): Filter specific entity types to simulate
+    - `use_llm_for_profiles` (optional): Use LLM to generate rich profiles (default: true)
+    - `parallel_profile_count` (optional): Number of profiles to generate in parallel (default: 5)
+    - `force_regenerate` (optional): Force regeneration if already prepared (default: false)
+    
+    **Response:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_abc123",
+        "task_id": "task_prep789",
+        "status": "preparing",
+        "message": "Preparation task started",
+        "expected_entities_count": 68,
+        "entity_types": ["Student", "Professor"]
+      }
+    }
+    ```
+    
+    This is an asynchronous process that:
+    1. Reads entities from the knowledge graph
+    2. Generates OASIS agent profiles for each entity
+    3. Creates simulation configuration with LLM
+    4. Prepares platform-specific configs (Twitter/Reddit)
+  </Step>
+
+  <Step title="Monitor Preparation Progress">
+    Track the preparation progress:
+    
+    ```bash POST /api/simulation/prepare/status
+    curl -X POST http://localhost:5000/api/simulation/prepare/status \
+      -H "Content-Type: application/json" \
+      -d '{
+        "task_id": "task_prep789",
+        "simulation_id": "sim_abc123"
+      }'
+    ```
+    
+    **Progress stages:**
+    - **Reading graph entities (0-20%)**: Filtering and loading entities from knowledge graph
+    - **Generating agent profiles (20-70%)**: Creating personality and behavior profiles for each agent
+    - **Generating simulation config (70-90%)**: LLM creates optimal simulation parameters
+    - **Preparing scripts (90-100%)**: Final setup and validation
+    
+    **Status Response:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "task_id": "task_prep789",
+        "status": "processing",
+        "progress": 45,
+        "message": "[2/4] Generating Agent profiles: 30/68 - Creating profile for John Smith",
+        "progress_detail": {
+          "current_stage": "generating_profiles",
+          "stage_progress": 44,
+          "current_item": 30,
+          "total_items": 68
+        }
+      }
+    }
+    ```
+    
+    Poll every 5-10 seconds until `status` is `completed`.
+  </Step>
+
+  <Step title="Review Agent Profiles">
+    Once preparation is complete, review the generated agent profiles:
+    
+    ```bash GET /api/simulation/{simulation_id}/profiles?platform=reddit
+    curl http://localhost:5000/api/simulation/sim_abc123/profiles?platform=reddit
+    ```
+    
+    **Example profile:**
+    ```json
+    {
+      "agent_id": "agent_student_001",
+      "entity_name": "John Smith",
+      "entity_type": "Student",
+      "personality": {
+        "openness": 0.7,
+        "conscientiousness": 0.6,
+        "extraversion": 0.8,
+        "agreeableness": 0.7,
+        "neuroticism": 0.4
+      },
+      "bio": "Computer Science major passionate about tech policy",
+      "interests": ["AI", "Privacy", "Open Source"],
+      "activity_level": "high",
+      "stance_on_simulation_topic": "Moderately supportive with concerns"
+    }
+    ```
+  </Step>
+
+  <Step title="Review Simulation Configuration">
+    Check the LLM-generated simulation configuration:
+    
+    ```bash GET /api/simulation/{simulation_id}/config
+    curl http://localhost:5000/api/simulation/sim_abc123/config
+    ```
+    
+    **Configuration includes:**
+    ```json
+    {
+      "simulation_id": "sim_abc123",
+      "time_config": {
+        "total_simulation_hours": 168,
+        "minutes_per_round": 60,
+        "peak_hours": [9, 10, 11, 18, 19, 20],
+        "low_activity_hours": [1, 2, 3, 4, 5]
+      },
+      "agent_configs": [
+        {
+          "agent_id": "agent_student_001",
+          "activity_multiplier": 1.2,
+          "post_probability": 0.3,
+          "reply_probability": 0.6
+        }
+      ],
+      "event_config": {
+        "initial_posts": [
+          {
+            "content": "Just heard about the new policy...",
+            "author_type": "Student",
+            "timing": "hour_0"
+          }
+        ],
+        "hot_topics": ["campus policy", "student rights"]
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Start the Simulation">
+    Run the simulation using the prepared configuration:
+    
+    ```bash POST /api/simulation/{simulation_id}/start
+    curl -X POST http://localhost:5000/api/simulation/sim_abc123/start \
+      -H "Content-Type: application/json" \
+      -d '{
+        "max_rounds": 168,
+        "platform": "both"
+      }'
+    ```
+    
+    **Parameters:**
+    - `max_rounds` (optional): Maximum simulation rounds (defaults to config recommendation)
+    - `platform` (optional): Which platform(s) to run - `twitter`, `reddit`, or `both` (default: both)
+    - `async` (optional): Run asynchronously in background (default: true)
+    
+    **Response:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_abc123",
+        "status": "running",
+        "current_round": 0,
+        "total_rounds": 168,
+        "started_at": "2024-12-10T15:00:00"
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Monitor Simulation Progress">
+    Track the running simulation:
+    
+    ```bash GET /api/simulation/{simulation_id}
+    curl http://localhost:5000/api/simulation/sim_abc123
+    ```
+    
+    **Status Response:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_abc123",
+        "status": "running",
+        "current_round": 45,
+        "total_rounds": 168,
+        "progress_percentage": 26.8,
+        "estimated_completion": "2024-12-10T18:30:00",
+        "agent_count": 68,
+        "total_posts": 234,
+        "total_replies": 567
+      }
+    }
+    ```
+    
+    **Simulation status values:**
+    - `created`: Simulation initialized
+    - `preparing`: Generating agent profiles and config
+    - `ready`: Ready to run
+    - `running`: Currently executing
+    - `paused`: Temporarily stopped
+    - `completed`: Finished successfully
+    - `stopped`: Manually stopped by user
+    - `failed`: Error occurred
+  </Step>
+
+  <Step title="Stop or Pause Simulation">
+    Control simulation execution:
+    
+    **Pause simulation:**
+    ```bash POST /api/simulation/{simulation_id}/pause
+    curl -X POST http://localhost:5000/api/simulation/sim_abc123/pause
+    ```
+    
+    **Resume simulation:**
+    ```bash POST /api/simulation/{simulation_id}/resume
+    curl -X POST http://localhost:5000/api/simulation/sim_abc123/resume
+    ```
+    
+    **Stop simulation:**
+    ```bash POST /api/simulation/{simulation_id}/stop
+    curl -X POST http://localhost:5000/api/simulation/sim_abc123/stop
+    ```
+  </Step>
+</Steps>
+
+## Understanding Simulation Configuration
+
+### Time Configuration
+
+The LLM intelligently generates time parameters based on your simulation requirements:
+
+- **Total Simulation Hours**: How many simulated hours to run (e.g., 168 = 1 week)
+- **Minutes Per Round**: Simulated time elapsed per round (e.g., 60 = each round = 1 hour)
+- **Peak Hours**: Hours with highest agent activity (e.g., 9-11 AM, 6-8 PM)
+- **Low Activity Hours**: Hours with minimal activity (e.g., 1-5 AM)
+
+### Agent Configuration
+
+Each agent has individual behavior parameters:
+
+- **Activity Multiplier**: How active compared to average (0.5 = half as active, 2.0 = twice as active)
+- **Post Probability**: Likelihood of creating new posts per round
+- **Reply Probability**: Likelihood of replying to existing posts
+- **Stance**: Agent's position on the simulation topic
+
+### Event Configuration
+
+- **Initial Posts**: Pre-scripted posts to seed the simulation
+- **Hot Topics**: Keywords that trigger increased engagement
+- **Scheduled Events**: Time-based triggers for specific behaviors
+
+## Platform-Specific Features
+
+<Tabs>
+  <Tab title="Reddit">
+    Reddit simulations include:
+    
+    - **Subreddit structure**: Posts and threaded comments
+    - **Voting system**: Upvotes/downvotes affect visibility
+    - **Moderation**: Simulated mod actions on rule-breaking content
+    - **Post types**: Text posts, link posts, questions
+    
+    **Agent profiles** (`reddit_profiles.json`):
+    - Username generation
+    - Karma simulation
+    - Subreddit preferences
+    - Comment style and length
+  </Tab>
+  
+  <Tab title="Twitter">
+    Twitter simulations include:
+    
+    - **Tweet types**: Original tweets, replies, retweets, quotes
+    - **Hashtags**: Automatic hashtag generation and tracking
+    - **Mentions**: @-mentions between agents
+    - **Threads**: Multi-tweet threads for longer thoughts
+    
+    **Agent profiles** (`twitter_profiles.csv`):
+    - Handle generation (@username)
+    - Follower count simulation
+    - Tweet frequency patterns
+    - Retweet/like behavior
+  </Tab>
+</Tabs>
+
+## Advanced Options
+
+### Filtering Entity Types
+
+Simulate only specific types of entities:
+
+```bash
+curl -X POST http://localhost:5000/api/simulation/prepare \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_abc123",
+    "entity_types": ["Student", "Professor"],
+    "use_llm_for_profiles": true
+  }'
+```
+
+This is useful for:
+- Testing with smaller agent counts
+- Focusing on specific stakeholder groups
+- Running multiple simulations with different actor sets
+
+### Parallel Profile Generation
+
+Speed up preparation by generating profiles in parallel:
+
+```json
+{
+  "parallel_profile_count": 10
+}
+```
+
+Higher values = faster preparation, but more API usage.
+
+### Force Regeneration
+
+Regenerate agent profiles and config:
+
+```json
+{
+  "force_regenerate": true
+}
+```
+
+Use this to:
+- Try different personality distributions
+- Regenerate with updated simulation requirements
+- Fix issues with initial generation
+
+## Managing Simulations
+
+### List All Simulations
+
+View all simulations for a project:
+
+```bash GET /api/simulation/list?project_id={project_id}
+curl http://localhost:5000/api/simulation/list?project_id=proj_xyz789
+```
+
+### View Simulation History
+
+Get detailed simulation history:
+
+```bash GET /api/simulation/history?limit=20
+curl http://localhost:5000/api/simulation/history?limit=20
+```
+
+### Download Configuration
+
+Download the simulation config file:
+
+```bash GET /api/simulation/{simulation_id}/config/download
+curl -O http://localhost:5000/api/simulation/sim_abc123/config/download
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Preparation fails with 'No entities found'">
+    - Ensure your knowledge graph has been built successfully
+    - Check that entity types match those in your graph
+    - Verify the graph_id is correct in your simulation
+  </Accordion>
+
+  <Accordion title="Profile generation is very slow">
+    - Profile generation uses LLM calls for each entity
+    - Increase `parallel_profile_count` to speed up (max 10)
+    - For testing, use fewer entity types or smaller graphs
+    - Expect ~5-10 seconds per profile with LLM generation
+  </Accordion>
+
+  <Accordion title="Simulation gets stuck at certain round">
+    - Check agent log files for errors
+    - Some agents may be rate-limited by LLM provider
+    - Reduce `max_rounds` or agent count for testing
+    - Check that OPENAI_API_KEY has sufficient quota
+  </Accordion>
+
+  <Accordion title="Agent behavior seems unrealistic">
+    - Review agent profiles - regenerate if needed
+    - Check simulation_requirement is clear and specific
+    - Ensure knowledge graph has rich entity context
+    - Try adjusting time_config parameters
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Start Small" icon="seedling">
+    Begin with 10-20 agents and 24-48 simulation hours to test your setup before running large-scale simulations.
+  </Card>
+  
+  <Card title="Monitor Early Rounds" icon="eye">
+    Check the first 5-10 rounds to ensure agents are behaving as expected before letting long simulations run.
+  </Card>
+  
+  <Card title="Use Entity Filtering" icon="filter">
+    Filter to most relevant entity types to reduce agent count and improve simulation quality.
+  </Card>
+  
+  <Card title="Review Profiles First" icon="user-check">
+    Always review generated agent profiles before starting simulation to catch any issues early.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Generate Reports" icon="chart-line" href="/guides/generating-reports">
+    Analyze simulation results with AI-generated prediction reports
+  </Card>
+  
+  <Card title="Agent Interactions" icon="comments" href="/guides/agent-interactions">
+    Chat with simulated agents and explore their perspectives
+  </Card>
+</CardGroup>

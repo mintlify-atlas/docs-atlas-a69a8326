@@ -1,0 +1,402 @@
+---
+title: "Run Simulation"
+description: "Start, monitor, and control simulation execution"
+---
+
+## Start Simulation
+
+### Endpoint
+
+```
+POST /api/simulation/start
+```
+
+Starts the simulation runner with specified platform and configuration. The simulation runs as a background process and can be monitored in real-time.
+
+### Request Body
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID to start
+</ParamField>
+
+<ParamField path="platform" type="string" default="parallel">
+  Platform mode:
+  - `parallel` - Run Twitter and Reddit simultaneously (recommended)
+  - `twitter` - Run Twitter only
+  - `reddit` - Run Reddit only
+</ParamField>
+
+<ParamField path="max_rounds" type="number">
+  Maximum simulation rounds to run. Use this to cap long-running simulations. If not specified, uses the LLM-generated recommendation.
+</ParamField>
+
+<ParamField path="enable_graph_memory_update" type="boolean" default="false">
+  Enable real-time memory updates to the Zep knowledge graph. When enabled, all agent activities (posts, comments, likes) are written back to the graph for future analysis.
+</ParamField>
+
+<ParamField path="force" type="boolean" default="false">
+  Force restart even if simulation is running or completed. This will:
+  - Stop any running simulation process
+  - Clean up run logs (`run_state.json`, `actions.jsonl`, `simulation.log`)
+  - Preserve configuration and profile files
+  - Start fresh simulation
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="simulation_id" type="string">
+    The simulation ID
+  </ResponseField>
+
+  <ResponseField name="runner_status" type="string">
+    Runner status: `running`
+  </ResponseField>
+
+  <ResponseField name="process_pid" type="number">
+    Process ID of the simulation runner
+  </ResponseField>
+
+  <ResponseField name="twitter_running" type="boolean">
+    Whether Twitter platform is active
+  </ResponseField>
+
+  <ResponseField name="reddit_running" type="boolean">
+    Whether Reddit platform is active
+  </ResponseField>
+
+  <ResponseField name="started_at" type="string">
+    ISO 8601 timestamp when simulation started
+  </ResponseField>
+
+  <ResponseField name="max_rounds_applied" type="number">
+    The max_rounds value applied (if specified)
+  </ResponseField>
+
+  <ResponseField name="graph_memory_update_enabled" type="boolean">
+    Whether graph memory updates are enabled
+  </ResponseField>
+
+  <ResponseField name="force_restarted" type="boolean">
+    Whether this was a forced restart
+  </ResponseField>
+
+  <ResponseField name="graph_id" type="string">
+    Graph ID for memory updates (if enabled)
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```json
+{
+  "simulation_id": "sim_def456",
+  "platform": "parallel",
+  "max_rounds": 100,
+  "enable_graph_memory_update": true,
+  "force": false
+}
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_def456",
+    "runner_status": "running",
+    "process_pid": 12345,
+    "twitter_running": true,
+    "reddit_running": true,
+    "started_at": "2026-03-13T10:30:00Z",
+    "max_rounds_applied": 100,
+    "graph_memory_update_enabled": true,
+    "force_restarted": false,
+    "graph_id": "mirofish_xyz789"
+  }
+}
+```
+
+## Get Simulation Status
+
+### Endpoint
+
+```
+GET /api/simulation/{simulation_id}
+```
+
+Retrieve the current state of a simulation, including preparation status and configuration readiness.
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="simulation_id" type="string">
+    The simulation ID
+  </ResponseField>
+
+  <ResponseField name="project_id" type="string">
+    Associated project ID
+  </ResponseField>
+
+  <ResponseField name="graph_id" type="string">
+    Knowledge graph ID
+  </ResponseField>
+
+  <ResponseField name="status" type="string">
+    Simulation status: `created`, `preparing`, `ready`, `running`, `paused`, `completed`, `failed`
+  </ResponseField>
+
+  <ResponseField name="entities_count" type="number">
+    Number of entities/agents in the simulation
+  </ResponseField>
+
+  <ResponseField name="entity_types" type="array">
+    List of entity types included
+  </ResponseField>
+
+  <ResponseField name="config_generated" type="boolean">
+    Whether configuration has been generated
+  </ResponseField>
+
+  <ResponseField name="created_at" type="string">
+    Creation timestamp
+  </ResponseField>
+
+  <ResponseField name="updated_at" type="string">
+    Last update timestamp
+  </ResponseField>
+
+  <ResponseField name="run_instructions" type="object">
+    Instructions for running the simulation (only when status is `ready`)
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_def456",
+    "project_id": "proj_abc123",
+    "graph_id": "mirofish_xyz789",
+    "status": "ready",
+    "entities_count": 68,
+    "entity_types": ["Student", "Professor"],
+    "config_generated": true,
+    "created_at": "2026-03-13T10:00:00Z",
+    "updated_at": "2026-03-13T10:15:00Z"
+  }
+}
+```
+
+## Monitor Simulation Progress
+
+### Endpoint
+
+```
+GET /api/simulation/{simulation_id}/run-status
+```
+
+Get real-time simulation execution status. Use this endpoint for polling updates during simulation runs.
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="simulation_id" type="string">
+    The simulation ID
+  </ResponseField>
+
+  <ResponseField name="runner_status" type="string">
+    Current runner status: `idle`, `running`, `stopped`, `completed`, `failed`
+  </ResponseField>
+
+  <ResponseField name="current_round" type="number">
+    Current simulation round
+  </ResponseField>
+
+  <ResponseField name="total_rounds" type="number">
+    Total planned rounds
+  </ResponseField>
+
+  <ResponseField name="progress_percent" type="number">
+    Progress percentage (0-100)
+  </ResponseField>
+
+  <ResponseField name="simulated_hours" type="number">
+    Simulated time elapsed in hours
+  </ResponseField>
+
+  <ResponseField name="total_simulation_hours" type="number">
+    Total simulation duration in hours
+  </ResponseField>
+
+  <ResponseField name="twitter_running" type="boolean">
+    Twitter platform status
+  </ResponseField>
+
+  <ResponseField name="reddit_running" type="boolean">
+    Reddit platform status
+  </ResponseField>
+
+  <ResponseField name="twitter_actions_count" type="number">
+    Number of Twitter actions performed
+  </ResponseField>
+
+  <ResponseField name="reddit_actions_count" type="number">
+    Number of Reddit actions performed
+  </ResponseField>
+
+  <ResponseField name="total_actions_count" type="number">
+    Total actions across all platforms
+  </ResponseField>
+
+  <ResponseField name="started_at" type="string">
+    Simulation start timestamp
+  </ResponseField>
+
+  <ResponseField name="updated_at" type="string">
+    Last update timestamp
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_def456",
+    "runner_status": "running",
+    "current_round": 5,
+    "total_rounds": 144,
+    "progress_percent": 3.5,
+    "simulated_hours": 2,
+    "total_simulation_hours": 72,
+    "twitter_running": true,
+    "reddit_running": true,
+    "twitter_actions_count": 150,
+    "reddit_actions_count": 200,
+    "total_actions_count": 350,
+    "started_at": "2026-03-13T10:30:00Z",
+    "updated_at": "2026-03-13T11:00:00Z"
+  }
+}
+```
+
+## Stop Simulation
+
+### Endpoint
+
+```
+POST /api/simulation/stop
+```
+
+Stop a running simulation gracefully.
+
+### Request Body
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID to stop
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="simulation_id" type="string">
+    The simulation ID
+  </ResponseField>
+
+  <ResponseField name="runner_status" type="string">
+    New status: `stopped`
+  </ResponseField>
+
+  <ResponseField name="completed_at" type="string">
+    Timestamp when stopped
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```json
+{
+  "simulation_id": "sim_def456"
+}
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_def456",
+    "runner_status": "stopped",
+    "completed_at": "2026-03-13T12:00:00Z"
+  }
+}
+```
+
+## Error Responses
+
+### Simulation not ready
+
+```json
+{
+  "success": false,
+  "error": "模拟未准备好，当前状态: created，请先调用 /prepare 接口"
+}
+```
+
+### Already running
+
+```json
+{
+  "success": false,
+  "error": "模拟正在运行中，请先调用 /stop 接口停止，或使用 force=true 强制重新开始"
+}
+```
+
+### Missing graph_id for memory updates
+
+```json
+{
+  "success": false,
+  "error": "启用图谱记忆更新需要有效的 graph_id，请确保项目已构建图谱"
+}
+```
+
+## Simulation Runner Architecture
+
+The simulation runs as a background process using OASIS framework:
+
+- **Parallel Mode**: Runs Twitter and Reddit simulations simultaneously with synchronized rounds
+- **Platform-Specific Mode**: Runs single platform with optimized performance
+- **Action Logging**: All agent actions are logged to `actions.jsonl` for analysis
+- **State Persistence**: Runner state is saved to `run_state.json` for recovery and monitoring
+- **Process Management**: Uses process isolation for stability and resource control
+
+## Monitoring Best Practices
+
+1. **Polling Interval**: Poll `/run-status` every 2-5 seconds for UI updates
+2. **Progress Tracking**: Use `progress_percent` and `current_round` for progress bars
+3. **Action Counts**: Monitor `total_actions_count` to verify simulation activity
+4. **Error Detection**: Check for `runner_status: failed` and handle gracefully
+5. **Completion**: Detect `runner_status: completed` to trigger post-processing

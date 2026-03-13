@@ -1,80 +1,312 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get your first MiroFish simulation running in under 10 minutes
 ---
 
-## Get started in three steps
+This guide will take you from zero to your first working simulation, showing you how to upload a document, build a knowledge graph, run a simulation, and view prediction results.
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+Before starting, make sure you have:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="MiroFish Installed" icon="check">
+    Follow the [Installation Guide](/installation) to set up MiroFish
+  </Card>
+  
+  <Card title="Services Running" icon="server">
+    Both frontend (port 3000) and backend (port 5001) should be running
+  </Card>
 </CardGroup>
 
+<Warning>
+MiroFish simulations consume significant LLM API tokens. Start with simulations of fewer than 40 rounds to manage costs.
+</Warning>
+
+## Step 1: Start MiroFish
+
+<Tabs>
+  <Tab title="Source Deployment">
+    ```bash
+    # From the project root directory
+    npm run dev
+    ```
+    
+    This starts both frontend and backend services concurrently.
+  </Tab>
+  
+  <Tab title="Docker Deployment">
+    ```bash
+    docker compose up -d
+    ```
+    
+    Services will start in detached mode.
+  </Tab>
+</Tabs>
+
+**Verify services are running:**
+
+- Frontend: Open [http://localhost:3000](http://localhost:3000) in your browser
+- Backend API: Check [http://localhost:5001](http://localhost:5001) (should return API info)
+
+## Step 2: Prepare Your Seed Document
+
+MiroFish needs a seed document to construct the simulation world. This can be:
+
+- A data analysis report
+- A news article or collection of articles
+- A story or novel excerpt
+- A policy document
+- Any text-based content describing a scenario
+
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+The document should contain rich information about entities (people, organizations, events) and their relationships. The more detailed your seed document, the more accurate the simulation.
 </Note>
+
+**Supported formats:**
+- Plain text files (`.txt`)
+- PDF documents (`.pdf`)
+- The system automatically handles various text encodings
+
+## Step 3: Upload Document & Build Graph
+
+<Steps>
+  <Step title="Navigate to Project Creation">
+    In the MiroFish web interface, click on **"New Project"** or the create button.
+  </Step>
+  
+  <Step title="Upload Your Seed Document">
+    Click the upload area and select your prepared document. The system supports:
+    - PDF files (processed via PyMuPDF)
+    - Text files (auto-detects encoding using charset-normalizer)
+  </Step>
+  
+  <Step title="Initiate Graph Building">
+    Click **"Build Graph"** to start the GraphRAG construction process. This will:
+    - Extract entities and relationships from your document
+    - Create agent personas with individual characteristics
+    - Inject individual and collective memory
+    - Construct the knowledge graph structure
+    
+    <Note>
+    Graph building may take several minutes depending on document size and LLM API response time.
+    </Note>
+  </Step>
+  
+  <Step title="Review the Generated Environment">
+    Once complete, you'll see:
+    - The list of generated agents (each with unique personas)
+    - The relationship graph between entities
+    - The initialized environment configuration
+  </Step>
+</Steps>
+
+## Step 4: Configure Simulation
+
+Before running the simulation, configure your prediction parameters:
+
+<Steps>
+  <Step title="Define Prediction Goal">
+    In natural language, describe what you want to predict. Examples:
+    - "How will public opinion evolve over the next 30 days?"
+    - "What will happen if policy X is implemented?"
+    - "How will the characters' relationships develop?"
+  </Step>
+  
+  <Step title="Set Simulation Rounds">
+    Choose the number of simulation rounds (iterations). Each round represents a time step in the simulation.
+    
+    <Warning>
+    Start with fewer than 40 rounds for your first simulation to manage API costs.
+    </Warning>
+  </Step>
+  
+  <Step title="Configure Optional Parameters">
+    Adjust additional settings if needed:
+    - Simulation speed
+    - Agent interaction frequency
+    - Environmental variables
+  </Step>
+</Steps>
+
+## Step 5: Run Simulation
+
+Start the simulation and watch your digital world come to life:
+
+<Steps>
+  <Step title="Start Simulation">
+    Click **"Start Simulation"** to begin. The system will:
+    - Initialize all agents with their personas and memories
+    - Start the dual-platform parallel simulation (powered by OASIS)
+    - Automatically parse your prediction requirements
+    - Update temporal memory dynamically as agents interact
+  </Step>
+  
+  <Step title="Monitor Progress">
+    Watch the simulation progress in real-time:
+    - View agent interactions and social media posts
+    - See relationship dynamics evolve
+    - Track key events and emergent behaviors
+    - Monitor simulation round progress
+  </Step>
+  
+  <Step title="Wait for Completion">
+    The simulation will run until:
+    - The specified number of rounds is complete
+    - You manually stop it
+    - A terminal condition is reached (if configured)
+  </Step>
+</Steps>
+
+## Step 6: View Results
+
+Once the simulation completes, explore the results:
+
+<Tabs>
+  <Tab title="Prediction Report">
+    The **ReportAgent** automatically generates a comprehensive prediction report containing:
+    
+    - Executive summary of key findings
+    - Detailed analysis of agent behaviors and interactions
+    - Trend predictions and scenario outcomes
+    - Supporting evidence from simulation data
+    - Visualizations of relationship dynamics
+    
+    The ReportAgent has access to a rich toolset for deep interaction with the post-simulation environment.
+  </Tab>
+  
+  <Tab title="Agent Interactions">
+    Browse the complete history of agent interactions:
+    
+    - Social media posts and conversations
+    - Relationship evolution over time
+    - Key decision points and turning events
+    - Individual agent trajectories
+    
+    You can filter by agent, time period, or interaction type.
+  </Tab>
+  
+  <Tab title="Interactive Chat">
+    Engage in deep interaction with the simulation:
+    
+    - **Chat with any agent**: Ask questions to individual agents about their experiences, motivations, and perspectives
+    - **Chat with ReportAgent**: Get clarifications on the prediction report, ask follow-up questions, or explore alternative scenarios
+    
+    All agents maintain their personalities and memories from the simulation.
+  </Tab>
+  
+  <Tab title="Visualizations">
+    Explore visual representations:
+    
+    - Relationship network graphs
+    - Temporal evolution charts
+    - Sentiment analysis over time
+    - Agent clustering and group dynamics
+  </Tab>
+</Tabs>
+
+## Example Workflow
+
+Here's a complete example using a public opinion scenario:
+
+<Steps>
+  <Step title="Upload Document">
+    Upload a news report about a trending public opinion event (similar to the Wuhan University example in the demo).
+  </Step>
+  
+  <Step title="Build Graph">
+    Let MiroFish extract entities (students, administrators, media, public figures) and relationships.
+  </Step>
+  
+  <Step title="Set Prediction Goal">
+    "Predict how public sentiment will evolve over 30 days and identify key influencers."
+  </Step>
+  
+  <Step title="Run 30 Rounds">
+    Start simulation with 30 rounds (each round = 1 day in simulation time).
+  </Step>
+  
+  <Step title="Review Report">
+    Read the generated prediction report showing sentiment trends, viral moments, and influential agents.
+  </Step>
+  
+  <Step title="Chat with Agents">
+    Talk to key agents (e.g., student representatives, administrators) to understand their perspectives and decision-making.
+  </Step>
+</Steps>
+
+## Tips for Better Simulations
+
+<AccordionGroup>
+  <Accordion title="Provide Rich Seed Documents">
+    - Include detailed descriptions of entities and their relationships
+    - Add context about the environment and situation
+    - Include relevant historical information
+    - The more comprehensive your input, the more accurate the simulation
+  </Accordion>
+  
+  <Accordion title="Start Small">
+    - Begin with 20-40 rounds for your first simulations
+    - Test with shorter documents initially
+    - Gradually increase complexity as you understand costs and capabilities
+  </Accordion>
+  
+  <Accordion title="Be Specific with Prediction Goals">
+    - Clear, focused questions yield better results
+    - Include timeframes (e.g., "over the next 30 days")
+    - Specify what aspects you want to predict (sentiment, behavior, outcomes)
+  </Accordion>
+  
+  <Accordion title="Monitor API Usage">
+    - Each simulation consumes LLM tokens for agent reasoning
+    - More agents and rounds = higher costs
+    - Use the recommended qwen-plus model for best cost/performance balance
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Simulation Fails to Start">
+    **Check:**
+    - `.env` file has valid `LLM_API_KEY` and `ZEP_API_KEY`
+    - Backend logs for API connection errors
+    - Graph building completed successfully
+    - Sufficient API quota available
+  </Accordion>
+  
+  <Accordion title="Graph Building Takes Too Long">
+    **Solutions:**
+    - Try a smaller document first
+    - Check your LLM API response times
+    - Consider using the optional boost LLM configuration for faster processing
+  </Accordion>
+  
+  <Accordion title="Poor Prediction Quality">
+    **Improve by:**
+    - Providing more detailed seed documents
+    - Being more specific in prediction goals
+    - Increasing simulation rounds for deeper interactions
+    - Adjusting agent configuration parameters
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/configuration">
+    Learn about advanced configuration options
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/graph/ontology-generate">
+    Explore the backend API for custom integrations
+  </Card>
+  
+  <Card title="Best Practices" icon="lightbulb" href="/guides/running-simulations">
+    Get tips for optimal simulation results
+  </Card>
+  
+  <Card title="Examples" icon="book" href="https://github.com/666ghj/MiroFish#demo-videos">
+    See detailed examples of different use cases
+  </Card>
+</CardGroup>

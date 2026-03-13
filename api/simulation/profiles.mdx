@@ -1,0 +1,385 @@
+---
+title: "Agent Profiles"
+description: "Access and monitor AI-generated agent profiles for simulations"
+---
+
+## Get Agent Profiles
+
+### Endpoint
+
+```
+GET /api/simulation/{simulation_id}/profiles
+```
+
+Retrieve generated agent profiles for a simulation. Each entity from the knowledge graph is converted into an agent profile with personality traits, interests, and behavioral patterns.
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="platform" type="string" default="reddit">
+  Platform to retrieve profiles for:
+  - `reddit` - Reddit agent profiles (JSON format)
+  - `twitter` - Twitter agent profiles (CSV format)
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="platform" type="string">
+    The platform type
+  </ResponseField>
+
+  <ResponseField name="count" type="number">
+    Number of profiles
+  </ResponseField>
+
+  <ResponseField name="profiles" type="array">
+    Array of agent profile objects
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+GET /api/simulation/sim_def456/profiles?platform=reddit
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "platform": "reddit",
+    "count": 68,
+    "profiles": [
+      {
+        "id": 0,
+        "name": "张三",
+        "entity_uuid": "entity_uuid_1",
+        "entity_type": "Student",
+        "age": 20,
+        "gender": "male",
+        "personality": "Outgoing, tech-savvy, passionate about AI and gaming",
+        "interests": ["Artificial Intelligence", "Gaming", "Music", "Technology News"],
+        "background": "Junior at Wuhan University majoring in Computer Science. Active in tech communities and interested in emerging technologies.",
+        "activity_level": "high",
+        "posting_frequency": 0.8,
+        "commenting_frequency": 0.9,
+        "stance": "progressive",
+        "subreddit_preferences": ["r/MachineLearning", "r/gaming", "r/CSCareerQuestions"],
+        "tone": "casual, enthusiastic",
+        "emoji_usage": "moderate"
+      },
+      {
+        "id": 1,
+        "name": "李教授",
+        "entity_uuid": "entity_uuid_2",
+        "entity_type": "Professor",
+        "age": 45,
+        "gender": "male",
+        "personality": "Thoughtful, experienced, analytical",
+        "interests": ["Higher Education", "Research", "Academic Policy"],
+        "background": "Professor of Computer Science at Wuhan University with 15 years of teaching experience.",
+        "activity_level": "medium",
+        "posting_frequency": 0.3,
+        "commenting_frequency": 0.5,
+        "stance": "moderate",
+        "subreddit_preferences": ["r/AskAcademia", "r/Professors"],
+        "tone": "formal, measured",
+        "emoji_usage": "rare"
+      }
+    ]
+  }
+}
+```
+
+## Get Real-Time Profiles
+
+### Endpoint
+
+```
+GET /api/simulation/{simulation_id}/profiles/realtime
+```
+
+Monitor agent profile generation in real-time during the preparation phase. Unlike the standard profiles endpoint, this directly reads files and provides metadata useful for progress tracking.
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="platform" type="string" default="reddit">
+  Platform: `reddit` or `twitter`
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="simulation_id" type="string">
+    The simulation ID
+  </ResponseField>
+
+  <ResponseField name="platform" type="string">
+    The platform type
+  </ResponseField>
+
+  <ResponseField name="count" type="number">
+    Current number of generated profiles
+  </ResponseField>
+
+  <ResponseField name="total_expected" type="number">
+    Expected total number of profiles (if known)
+  </ResponseField>
+
+  <ResponseField name="is_generating" type="boolean">
+    Whether profile generation is in progress
+  </ResponseField>
+
+  <ResponseField name="file_exists" type="boolean">
+    Whether the profiles file exists
+  </ResponseField>
+
+  <ResponseField name="file_modified_at" type="string">
+    Last modification timestamp of profiles file
+  </ResponseField>
+
+  <ResponseField name="profiles" type="array">
+    Array of currently generated profiles
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+GET /api/simulation/sim_def456/profiles/realtime?platform=reddit
+```
+
+### Example Response (In Progress)
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_def456",
+    "platform": "reddit",
+    "count": 30,
+    "total_expected": 68,
+    "is_generating": true,
+    "file_exists": true,
+    "file_modified_at": "2026-03-13T10:12:45Z",
+    "profiles": [
+      {
+        "id": 0,
+        "name": "张三",
+        "entity_type": "Student"
+      }
+    ]
+  }
+}
+```
+
+### Example Response (Complete)
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_def456",
+    "platform": "reddit",
+    "count": 68,
+    "total_expected": 68,
+    "is_generating": false,
+    "file_exists": true,
+    "file_modified_at": "2026-03-13T10:15:00Z",
+    "profiles": [
+      // Full profile objects...
+    ]
+  }
+}
+```
+
+## Profile Schema
+
+### Reddit Profile Fields
+
+<ResponseField name="id" type="number">
+  Agent ID (0-indexed)
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Agent name from entity
+</ResponseField>
+
+<ResponseField name="entity_uuid" type="string">
+  Source entity UUID from knowledge graph
+</ResponseField>
+
+<ResponseField name="entity_type" type="string">
+  Entity type (Student, Professor, etc.)
+</ResponseField>
+
+<ResponseField name="age" type="number">
+  Estimated or actual age
+</ResponseField>
+
+<ResponseField name="gender" type="string">
+  Gender identifier
+</ResponseField>
+
+<ResponseField name="personality" type="string">
+  Personality description generated by LLM
+</ResponseField>
+
+<ResponseField name="interests" type="array">
+  List of interests and topics
+</ResponseField>
+
+<ResponseField name="background" type="string">
+  Biographical background
+</ResponseField>
+
+<ResponseField name="activity_level" type="string">
+  Activity level: `low`, `medium`, `high`
+</ResponseField>
+
+<ResponseField name="posting_frequency" type="number">
+  Posting frequency coefficient (0-1)
+</ResponseField>
+
+<ResponseField name="commenting_frequency" type="number">
+  Commenting frequency coefficient (0-1)
+</ResponseField>
+
+<ResponseField name="stance" type="string">
+  General stance: `progressive`, `moderate`, `conservative`
+</ResponseField>
+
+<ResponseField name="subreddit_preferences" type="array">
+  Preferred subreddit communities
+</ResponseField>
+
+<ResponseField name="tone" type="string">
+  Communication tone and style
+</ResponseField>
+
+<ResponseField name="emoji_usage" type="string">
+  Emoji usage pattern: `rare`, `moderate`, `frequent`
+</ResponseField>
+
+### Twitter Profile Fields
+
+Twitter profiles are stored in CSV format with similar fields:
+
+- `id` - Agent ID
+- `name` - Display name
+- `username` - Twitter handle (auto-generated)
+- `bio` - Profile biography
+- `personality` - Personality traits
+- `interests` - Interest areas
+- `activity_level` - Activity frequency
+- `posting_frequency` - Tweet frequency
+- `retweet_frequency` - Retweet frequency
+- `reply_frequency` - Reply frequency
+- `stance` - Political/social stance
+- `tone` - Communication style
+- `hashtag_usage` - Hashtag usage pattern
+
+## Profile Generation Process
+
+Agent profiles are generated during the [preparation phase](/api/simulation/prepare):
+
+1. **Entity Reading**: Entities are loaded from the knowledge graph with full context
+2. **LLM Enhancement**: GPT-4 generates personality, interests, and behavioral traits based on entity properties and relationships
+3. **Platform Adaptation**: Profiles are formatted for Reddit (JSON) and Twitter (CSV) platforms
+4. **Behavioral Calibration**: Activity levels and frequencies are intelligently distributed to create realistic simulation dynamics
+
+## Example Profile Generation Prompt
+
+The system uses prompts like this to generate profiles:
+
+```
+Based on the following entity from a knowledge graph:
+
+Name: 张三
+Type: Student
+Properties: age=20, major=Computer Science, year=Junior
+Relationships:
+  - STUDIES_AT: 武汉大学
+  - FOLLOWS: 李教授
+  - MEMBER_OF: 计算机协会
+
+Generate a detailed agent profile including:
+- Personality traits
+- Interests and hobbies
+- Background story
+- Activity patterns
+- Communication style
+```
+
+## Using Profiles in Simulations
+
+Profiles are loaded by the OASIS simulation framework and used to:
+
+1. **Initialize Agents**: Each agent is configured with their profile data
+2. **Guide Behavior**: LLM uses personality and interests to generate contextual posts/comments
+3. **Determine Activity**: Frequencies control how often agents act
+4. **Shape Interactions**: Stances and preferences influence which content agents engage with
+5. **Maintain Consistency**: Agents reference their profile to stay in character throughout simulation
+
+## Error Responses
+
+### Simulation not found
+
+```json
+{
+  "success": false,
+  "error": "模拟不存在: sim_def456"
+}
+```
+
+### Profiles not generated
+
+```json
+{
+  "success": false,
+  "error": "Profile文件不存在，请先调用 /prepare 接口"
+}
+```
+
+## Best Practices
+
+### Monitoring Profile Generation
+
+1. Start preparation: `POST /api/simulation/prepare`
+2. Poll realtime endpoint: `GET /profiles/realtime` every 2-3 seconds
+3. Track progress: Compare `count` vs `total_expected`
+4. Display sample profiles as they generate for user feedback
+5. Switch to standard endpoint once `is_generating: false`
+
+### Profile Quality
+
+- **LLM-Generated Profiles** (`use_llm_for_profiles: true`): Rich personalities with coherent backgrounds and realistic behaviors
+- **Template-Based Profiles** (`use_llm_for_profiles: false`): Faster generation but less diverse and engaging
+
+### Platform Differences
+
+- **Reddit**: Supports longer-form content, threading, subreddit communities
+- **Twitter**: Character limits, hashtags, retweets, quote tweets
+- Profiles are adapted for each platform's unique interaction patterns
